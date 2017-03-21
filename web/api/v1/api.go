@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/log"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/route"
 	"golang.org/x/net/context"
@@ -197,6 +198,9 @@ func (api *API) query(r *http.Request) (interface{}, *apiError) {
 		}
 		return nil, &apiError{errorExec, res.Err}
 	}
+
+	log.Debugf("Stats for instant query: %q\n\n%s\n", r.FormValue("query"), qry.Stats())
+
 	return &queryData{
 		ResultType: res.Value.Type(),
 		Result:     res.Value,
@@ -261,6 +265,9 @@ func (api *API) queryRange(r *http.Request) (interface{}, *apiError) {
 		}
 		return nil, &apiError{errorExec, res.Err}
 	}
+
+	log.Debugf("Stats for range query: %q\n\n%s\n", r.FormValue("query"), qry.Stats())
+
 	return &queryData{
 		ResultType: res.Value.Type(),
 		Result:     res.Value,
