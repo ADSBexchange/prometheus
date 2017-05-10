@@ -16,11 +16,12 @@ package kubernetes
 import (
 	"testing"
 
+	"k8s.io/client-go/pkg/api/v1"
+	"k8s.io/client-go/tools/cache"
+
 	"github.com/prometheus/common/log"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/config"
-	"k8s.io/client-go/1.5/pkg/api/v1"
-	"k8s.io/client-go/1.5/tools/cache"
 )
 
 func endpointsStoreKeyFunc(obj interface{}) (string, error) {

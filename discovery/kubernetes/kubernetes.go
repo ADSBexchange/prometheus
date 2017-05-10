@@ -18,18 +18,20 @@ import (
 	"sync"
 	"time"
 
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/pkg/api"
+	apiv1 "k8s.io/client-go/pkg/api/v1"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/prometheus/config"
 
 	"github.com/prometheus/common/log"
 	"github.com/prometheus/common/model"
 	"golang.org/x/net/context"
-	"k8s.io/client-go/1.5/kubernetes"
-	"k8s.io/client-go/1.5/pkg/api"
-	apiv1 "k8s.io/client-go/1.5/pkg/api/v1"
-	"k8s.io/client-go/1.5/pkg/util/runtime"
-	"k8s.io/client-go/1.5/rest"
-	"k8s.io/client-go/1.5/tools/cache"
 )
 
 const (
@@ -63,6 +65,7 @@ func init() {
 // Discovery implements the TargetProvider interface for discovering
 // targets from Kubernetes.
 type Discovery struct {
+	url                string
 	client             kubernetes.Interface
 	role               config.KubernetesRole
 	logger             log.Logger
@@ -70,7 +73,7 @@ type Discovery struct {
 }
 
 func init() {
-	runtime.ErrorHandlers = []func(error){
+	utilruntime.ErrorHandlers = []func(error){
 		func(err error) {
 			log.With("component", "kube_client_runtime").Errorln(err)
 		},
@@ -91,6 +94,7 @@ func New(l log.Logger, conf *config.KubernetesSDConfig) (*Discovery, error) {
 		kcfg *rest.Config
 		err  error
 	)
+
 	if conf.APIServer.URL == nil {
 		// Use the Kubernetes provided pod service account
 		// as described in https://kubernetes.io/docs/admin/service-accounts-admin/
@@ -121,8 +125,8 @@ func New(l log.Logger, conf *config.KubernetesSDConfig) (*Discovery, error) {
 				CAFile:   conf.TLSConfig.CAFile,
 				CertFile: conf.TLSConfig.CertFile,
 				KeyFile:  conf.TLSConfig.KeyFile,
+				Insecure: conf.TLSConfig.InsecureSkipVerify,
 			},
-			Insecure: conf.TLSConfig.InsecureSkipVerify,
 		}
 		token := conf.BearerToken
 		if conf.BearerTokenFile != "" {
@@ -146,20 +150,104 @@ func New(l log.Logger, conf *config.KubernetesSDConfig) (*Discovery, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Discovery{
+	d := &Discovery{
 		client:             c,
 		logger:             l,
 		role:               conf.Role,
 		namespaceDiscovery: &conf.NamespaceDiscovery,
-	}, nil
+	}
+	if conf.APIServer.URL != nil {
+		d.url = conf.APIServer.URL.String()
+	}
+
+	return d, nil
 }
 
 const resyncPeriod = 10 * time.Minute
 
+// informapMap holds informers against different clusters and namespaces
+// for deduplication
+type informerMap struct {
+	cancel func()
+	sync.Mutex
+	m map[string]map[string]*informerEntry
+}
+
+type informerEntry struct {
+	cache.SharedInformer
+	cancel func()
+	refs   int
+}
+
+func (m informerMap) done(u string, ns, kind string) {
+	infs := m.m[u]
+	if infs == nil {
+		return
+	}
+	key := ns + "/" + kind
+	e, ok := infs[key]
+	if !ok {
+		return
+	}
+	e.refs--
+	if e.refs > 0 {
+		return
+	}
+	e.cancel()
+	delete(infs, key)
+}
+
+func (m informerMap) get(
+	u string,
+	kclient kubernetes.Interface,
+	ns string,
+	kind string,
+) cache.SharedInformer {
+	m.Lock()
+	defer m.Unlock()
+
+	mapping := map[string]runtime.Object{
+		"endpoints": &apiv1.Endpoints{},
+		"services":  &apiv1.Service{},
+		"pods":      &apiv1.Pod{},
+		"nodes":     &apiv1.Node{},
+	}
+
+	rclient := kclient.Core().RESTClient()
+	key := ns + "/" + kind
+
+	infs, ok := m.m[u]
+	if !ok {
+		infs = map[string]*informerEntry{}
+		m.m[u] = infs
+	}
+	f, ok := infs[key]
+	if !ok {
+		ctx, cancel := context.WithCancel(context.Background())
+
+		lw := cache.NewListWatchFromClient(rclient, kind, ns, nil)
+		f = &informerEntry{
+			SharedInformer: cache.NewSharedInformer(lw, mapping[kind], resyncPeriod),
+			cancel:         cancel,
+		}
+		go f.Run(ctx.Done())
+
+		for !f.HasSynced() {
+			time.Sleep(100 * time.Millisecond)
+		}
+		infs[key] = f
+	}
+	f.refs++
+
+	return f
+}
+
+var infmap = informerMap{
+	m: map[string]map[string]*informerEntry{},
+}
+
 // Run implements the TargetProvider interface.
 func (d *Discovery) Run(ctx context.Context, ch chan<- []*config.TargetGroup) {
-	rclient := d.client.Core().GetRESTClient()
-
 	namespaces := d.getNamespaces()
 
 	switch d.role {
@@ -167,87 +255,60 @@ func (d *Discovery) Run(ctx context.Context, ch chan<- []*config.TargetGroup) {
 		var wg sync.WaitGroup
 
 		for _, namespace := range namespaces {
-			elw := cache.NewListWatchFromClient(rclient, "endpoints", namespace, nil)
-			slw := cache.NewListWatchFromClient(rclient, "services", namespace, nil)
-			plw := cache.NewListWatchFromClient(rclient, "pods", namespace, nil)
 			eps := NewEndpoints(
 				d.logger.With("kubernetes_sd", "endpoint"),
-				cache.NewSharedInformer(slw, &apiv1.Service{}, resyncPeriod),
-				cache.NewSharedInformer(elw, &apiv1.Endpoints{}, resyncPeriod),
-				cache.NewSharedInformer(plw, &apiv1.Pod{}, resyncPeriod),
+				infmap.get(d.url, d.client, namespace, "services"),
+				infmap.get(d.url, d.client, namespace, "endpoints"),
+				infmap.get(d.url, d.client, namespace, "pods"),
 			)
-			go eps.endpointsInf.Run(ctx.Done())
-			go eps.serviceInf.Run(ctx.Done())
-			go eps.podInf.Run(ctx.Done())
 
-			for !eps.serviceInf.HasSynced() {
-				time.Sleep(100 * time.Millisecond)
-			}
-			for !eps.endpointsInf.HasSynced() {
-				time.Sleep(100 * time.Millisecond)
-			}
-			for !eps.podInf.HasSynced() {
-				time.Sleep(100 * time.Millisecond)
-			}
 			wg.Add(1)
-			go func() {
+			go func(ns string) {
 				defer wg.Done()
 				eps.Run(ctx, ch)
-			}()
+				infmap.done(d.url, ns, "endpoints")
+				infmap.done(d.url, ns, "services")
+				infmap.done(d.url, ns, "pods")
+			}(namespace)
 		}
 		wg.Wait()
 	case "pod":
 		var wg sync.WaitGroup
 		for _, namespace := range namespaces {
-			plw := cache.NewListWatchFromClient(rclient, "pods", namespace, nil)
 			pod := NewPod(
 				d.logger.With("kubernetes_sd", "pod"),
-				cache.NewSharedInformer(plw, &apiv1.Pod{}, resyncPeriod),
+				infmap.get(d.url, d.client, namespace, "pods"),
 			)
-			go pod.informer.Run(ctx.Done())
-
-			for !pod.informer.HasSynced() {
-				time.Sleep(100 * time.Millisecond)
-			}
 			wg.Add(1)
-			go func() {
+			go func(ns string) {
 				defer wg.Done()
 				pod.Run(ctx, ch)
-			}()
+				infmap.done(d.url, ns, "pods")
+			}(namespace)
 		}
 		wg.Wait()
 	case "service":
 		var wg sync.WaitGroup
 		for _, namespace := range namespaces {
-			slw := cache.NewListWatchFromClient(rclient, "services", namespace, nil)
 			svc := NewService(
 				d.logger.With("kubernetes_sd", "service"),
-				cache.NewSharedInformer(slw, &apiv1.Service{}, resyncPeriod),
+				infmap.get(d.url, d.client, namespace, "service"),
 			)
-			go svc.informer.Run(ctx.Done())
-
-			for !svc.informer.HasSynced() {
-				time.Sleep(100 * time.Millisecond)
-			}
 			wg.Add(1)
-			go func() {
+			go func(ns string) {
 				defer wg.Done()
 				svc.Run(ctx, ch)
-			}()
+				infmap.done(d.url, ns, "service")
+			}(namespace)
 		}
 		wg.Wait()
 	case "node":
-		nlw := cache.NewListWatchFromClient(rclient, "nodes", api.NamespaceAll, nil)
 		node := NewNode(
-			d.logger.With("kubernetes_sd", "node"),
-			cache.NewSharedInformer(nlw, &apiv1.Node{}, resyncPeriod),
+			d.logger.With("kubernetes_sd", "pod"),
+			infmap.get(d.url, d.client, api.NamespaceAll, "nodes"),
 		)
-		go node.informer.Run(ctx.Done())
-
-		for !node.informer.HasSynced() {
-			time.Sleep(100 * time.Millisecond)
-		}
 		node.Run(ctx, ch)
+		infmap.done(d.url, api.NamespaceAll, "nodes")
 
 	default:
 		d.logger.Errorf("unknown Kubernetes discovery kind %q", d.role)

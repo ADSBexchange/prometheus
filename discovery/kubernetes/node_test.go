@@ -20,13 +20,13 @@ import (
 	"testing"
 	"time"
 
+	"k8s.io/client-go/pkg/api/v1"
+
 	"github.com/prometheus/common/log"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/config"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
-	"k8s.io/client-go/1.5/pkg/api/v1"
-	"k8s.io/client-go/1.5/tools/cache"
 )
 
 type fakeInformer struct {
