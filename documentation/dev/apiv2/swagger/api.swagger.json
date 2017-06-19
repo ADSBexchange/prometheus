@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "web/api/v2/v2pb/api.proto",
+    "title": "proto/api/v2/api.proto",
     "version": "version not set"
   },
   "schemes": [
@@ -78,6 +78,31 @@
     }
   },
   "definitions": {
+    "typesLabelMatcher": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/typesLabelMatcherType"
+        },
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "description": "Matcher specifies a rule, which can match or set of labels or not."
+    },
+    "typesLabelMatcherType": {
+      "type": "string",
+      "enum": [
+        "EQ",
+        "NEQ",
+        "RE",
+        "NRE"
+      ],
+      "default": "EQ"
+    },
     "v2AdminTSDBReloadRequest": {
       "type": "object"
     },
@@ -98,7 +123,7 @@
         "matchers": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/v2LabelMatcher"
+            "$ref": "#/definitions/typesLabelMatcher"
           }
         }
       }
@@ -116,31 +141,6 @@
           "type": "string"
         }
       }
-    },
-    "v2LabelMatcher": {
-      "type": "object",
-      "properties": {
-        "type": {
-          "$ref": "#/definitions/v2LabelMatcherType"
-        },
-        "name": {
-          "type": "string"
-        },
-        "value": {
-          "type": "string"
-        }
-      },
-      "description": "Matcher specifies a rule, which can match or set of labels or not."
-    },
-    "v2LabelMatcherType": {
-      "type": "string",
-      "enum": [
-        "EQ",
-        "NEQ",
-        "RE",
-        "NRE"
-      ],
-      "default": "EQ"
     }
   }
 }

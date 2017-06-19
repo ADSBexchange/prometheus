@@ -15,16 +15,19 @@ if ! [[ $(protoc --version) =~ "3.2.0" ]]; then
 	exit 255
 fi
 
+PROM_ROOT="${GOPATH}/src/github.com/prometheus/prometheus"
+PROM_PATH="${PROM_ROOT}/prompb"
 GOGOPROTO_ROOT="${GOPATH}/src/github.com/gogo/protobuf"
 GOGOPROTO_PATH="${GOGOPROTO_ROOT}:${GOGOPROTO_ROOT}/protobuf"
 GRPC_GATEWAY_ROOT="${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway"
 
-DIRS="web/api/v2/v2pb"
+DIRS="prompb"
 
 for dir in ${DIRS}; do
 	pushd ${dir}
 		protoc --gogofast_out=plugins=grpc:. -I=. \
             -I="${GOGOPROTO_PATH}" \
+            -I="${PROM_PATH}" \
             -I="${GRPC_GATEWAY_ROOT}/third_party/googleapis" \
             *.proto
 
@@ -37,10 +40,11 @@ done
 
 protoc -I. \
     -I="${GOGOPROTO_PATH}" \
+    -I="${PROM_PATH}" \
     -I="${GRPC_GATEWAY_ROOT}/third_party/googleapis" \
     --grpc-gateway_out=logtostderr=true:. \
     --swagger_out=logtostderr=true:./documentation/dev/apiv2/swagger/. \
-    web/api/v2/v2pb/api.proto
+    prompb/rpc.proto
 
-mv documentation/dev/apiv2/swagger/web/api/v2/v2pb/api.swagger.json documentation/dev/apiv2/swagger
-rm -rf documentation/dev/apiv2/swagger/web
+mv documentation/dev/apiv2/swagger/proto/api/v2/api.swagger.json documentation/dev/apiv2/swagger
+rm -rf documentation/dev/apiv2/swagger/proto

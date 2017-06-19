@@ -30,7 +30,7 @@ import (
 	"github.com/cockroachdb/cockroach/pkg/util/protoutil"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/prometheus/prometheus/pkg/timestamp"
-	pb "github.com/prometheus/prometheus/web/api/v2/v2pb"
+	pb "github.com/prometheus/prometheus/proto/api/v2"
 	"github.com/prometheus/tsdb"
 	"github.com/prometheus/tsdb/labels"
 )

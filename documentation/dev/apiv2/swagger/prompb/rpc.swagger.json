@@ -1,0 +1,379 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "prompb/rpc.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/admin/tsdb/delete_series": {
+      "post": {
+        "summary": "DeleteSeries deletes data for a selection of series in a time range.",
+        "operationId": "DeleteSeries",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/prometheusTSDBSeriesDeleteResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/prometheusTSDBSeriesDeleteRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TSDB"
+        ]
+      }
+    },
+    "/v2/admin/tsdb/reload": {
+      "get": {
+        "summary": "Reload triggers a reload of block data.",
+        "operationId": "Reload",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/prometheusTSDBReloadResponse"
+            }
+          }
+        },
+        "tags": [
+          "TSDB"
+        ]
+      }
+    },
+    "/v2/admin/tsdb/snapshot": {
+      "get": {
+        "summary": "Snapshot creates a snapshot of all current data into 'snapshots/\u003cdatetime\u003e' under\nthe TSDB's date directory.",
+        "operationId": "Snapshot",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/prometheusTSDBSnapshotResponse"
+            }
+          }
+        },
+        "tags": [
+          "TSDB"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "TargetStatusHealth": {
+      "type": "string",
+      "enum": [
+        "UNKNOWN",
+        "HEALTHY",
+        "UNHEALTHY"
+      ],
+      "default": "UNKNOWN"
+    },
+    "prometheusAlertmanagersRequest": {
+      "type": "object"
+    },
+    "prometheusAlertmanagersResponse": {
+      "type": "object"
+    },
+    "prometheusHealthRequest": {
+      "type": "object"
+    },
+    "prometheusHealthResponse": {
+      "type": "object"
+    },
+    "prometheusLabel": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "prometheusLabelInfoRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "prometheusLabelInfoResponse": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "prometheusLabelMatcher": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/prometheusLabelMatcherType"
+        },
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "description": "Matcher specifies a rule, which can match or set of labels or not."
+    },
+    "prometheusLabelMatcherType": {
+      "type": "string",
+      "enum": [
+        "EQ",
+        "NEQ",
+        "RE",
+        "NRE"
+      ],
+      "default": "EQ"
+    },
+    "prometheusLabels": {
+      "type": "object",
+      "properties": {
+        "labels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/prometheusLabel"
+          }
+        }
+      }
+    },
+    "prometheusQueryRequest": {
+      "type": "object",
+      "properties": {
+        "range": {
+          "$ref": "#/definitions/prometheusTimeRange"
+        },
+        "expr": {
+          "type": "string"
+        }
+      }
+    },
+    "prometheusQueryResponse": {
+      "type": "object",
+      "properties": {
+        "series": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/prometheusTimeSeries"
+          }
+        }
+      }
+    },
+    "prometheusRawQueryRequest": {
+      "type": "object",
+      "properties": {
+        "range": {
+          "$ref": "#/definitions/prometheusTimeRange"
+        },
+        "matchers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/prometheusLabelMatcher"
+          }
+        }
+      }
+    },
+    "prometheusReadinessRequest": {
+      "type": "object"
+    },
+    "prometheusReadinessResponse": {
+      "type": "object"
+    },
+    "prometheusSample": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "number",
+          "format": "double"
+        },
+        "timestamp_ms": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "prometheusSeriesRequest": {
+      "type": "object",
+      "properties": {
+        "range": {
+          "$ref": "#/definitions/prometheusTimeRange"
+        },
+        "matchers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/prometheusLabelMatcher"
+          }
+        }
+      }
+    },
+    "prometheusSeriesResponse": {
+      "type": "object",
+      "properties": {
+        "series": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/prometheusLabels"
+          }
+        }
+      }
+    },
+    "prometheusTSDBReloadRequest": {
+      "type": "object"
+    },
+    "prometheusTSDBReloadResponse": {
+      "type": "object"
+    },
+    "prometheusTSDBSeriesDeleteRequest": {
+      "type": "object",
+      "properties": {
+        "range": {
+          "$ref": "#/definitions/prometheusTimeRange"
+        },
+        "matchers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/prometheusLabelMatcher"
+          }
+        }
+      }
+    },
+    "prometheusTSDBSeriesDeleteResponse": {
+      "type": "object"
+    },
+    "prometheusTSDBSnapshotRequest": {
+      "type": "object"
+    },
+    "prometheusTSDBSnapshotResponse": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "prometheusTarget": {
+      "type": "object",
+      "properties": {
+        "scrape_url": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/prometheusLabel"
+          }
+        },
+        "discovered_labels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/prometheusLabel"
+          }
+        },
+        "status": {
+          "$ref": "#/definitions/prometheusTargetStatus"
+        }
+      }
+    },
+    "prometheusTargetStatus": {
+      "type": "object",
+      "properties": {
+        "health": {
+          "$ref": "#/definitions/TargetStatusHealth"
+        },
+        "last_scrape": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "last_error": {
+          "type": "string"
+        }
+      }
+    },
+    "prometheusTargetsRequest": {
+      "type": "object"
+    },
+    "prometheusTargetsResponse": {
+      "type": "object",
+      "properties": {
+        "targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/prometheusTarget"
+          }
+        }
+      }
+    },
+    "prometheusTimeRange": {
+      "type": "object",
+      "properties": {
+        "min_time": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "max_time": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "prometheusTimeSeries": {
+      "type": "object",
+      "properties": {
+        "labels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/prometheusLabel"
+          }
+        },
+        "samples": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/prometheusSample"
+          }
+        }
+      }
+    },
+    "prometheusWriteRequest": {
+      "type": "object",
+      "properties": {
+        "series": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/prometheusTimeSeries"
+          }
+        }
+      }
+    },
+    "prometheusWriteResponse": {
+      "type": "object"
+    }
+  }
+}

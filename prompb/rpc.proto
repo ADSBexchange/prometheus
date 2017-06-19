@@ -1,0 +1,177 @@
+// Copyright 2017 Prometheus Team
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+package prometheus;
+
+import "types.proto";
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "prompb";
+
+option (gogoproto.sizer_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.goproto_getters_all) = false;
+
+service Query {
+  rpc Instant(QueryRequest) returns (QueryRequest);
+  rpc Range(QueryRequest) returns (QueryResponse);
+  rpc RawRange(RawQueryRequest) returns (QueryResponse);
+  rpc LabelInfo(LabelInfoRequest) returns (LabelInfoResponse);
+  rpc Series(SeriesRequest) returns (SeriesResponse);
+}
+
+message QueryRequest {
+  TimeRange range = 1;
+  string expr     = 2;
+}
+
+message QueryResponse {
+  repeated TimeSeries series = 1;
+}
+
+message RawQueryRequest {
+  TimeRange range                = 1;
+  repeated LabelMatcher matchers = 2;
+}
+
+message LabelInfoRequest {
+  string name = 1;
+}
+
+message LabelInfoResponse {
+  repeated string values = 1;
+}
+
+message SeriesRequest {
+  TimeRange range                = 1;
+  repeated LabelMatcher matchers = 2;
+}
+
+message SeriesResponse {
+  repeated Labels series = 1;
+}
+
+service RemoteWrite {
+  rpc Write(WriteRequest) returns (WriteResponse);
+}
+
+message WriteRequest {
+  repeated TimeSeries series = 1;
+}
+
+message WriteResponse {
+}
+
+service TSDB {
+  // Reload triggers a reload of block data.
+  rpc Reload(TSDBReloadRequest) returns (TSDBReloadResponse) {
+    option (google.api.http) = {
+      get: "/v2/admin/tsdb/reload"
+    };
+  }
+
+  // Snapshot creates a snapshot of all current data into 'snapshots/<datetime>' under
+  // the TSDB's date directory.
+  rpc Snapshot(TSDBSnapshotRequest) returns (TSDBSnapshotResponse) {
+    option (google.api.http) = {
+      get: "/v2/admin/tsdb/snapshot"
+    };
+  }
+
+  // DeleteSeries deletes data for a selection of series in a time range.
+  rpc DeleteSeries(TSDBSeriesDeleteRequest) returns (TSDBSeriesDeleteResponse) {
+    option (google.api.http) = {
+      post: "/v2/admin/tsdb/delete_series"
+      body: "*"
+    };
+  }
+}
+
+
+message TSDBReloadRequest {
+}
+
+message TSDBReloadResponse {
+}
+
+message TSDBSeriesDeleteRequest {
+  TimeRange range                = 1;
+  repeated LabelMatcher matchers = 2;
+}
+
+message TSDBSeriesDeleteResponse {
+}
+
+message TSDBSnapshotRequest {
+}
+
+message TSDBSnapshotResponse {
+  string name = 1;
+}
+
+service Status {
+  rpc Targets(TargetsRequest) returns (TargetsResponse);
+  rpc Alertmanagers(AlertmanagersRequest) returns (AlertmanagersResponse);
+  rpc Health(HealthRequest) returns (HealthResponse);
+  rpc Readiness(ReadinessRequest) returns (ReadinessResponse);
+}
+
+message TargetsRequest {
+}
+
+
+message TargetStatus {
+  enum Health {
+    UNKNOWN   = 0;
+    HEALTHY   = 1;
+    UNHEALTHY = 2;
+  }
+  Health health = 1;
+  google.protobuf.Timestamp last_scrape = 2 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  string last_error                     = 3;
+}
+
+message Target {
+  string scrape_url                 = 1;
+  repeated Label labels             = 2;
+  repeated Label discovered_labels  = 3;
+  TargetStatus status               = 4;
+}
+
+message TargetsResponse {
+  repeated Target targets = 1;
+}
+
+message AlertmanagersRequest {
+}
+
+message AlertmanagersResponse {
+}
+
+
+
+message HealthRequest {
+}
+
+message HealthResponse {
+}
+
+message ReadinessRequest {
+}
+
+message ReadinessResponse {
+}

@@ -1,11 +1,25 @@
+// Copyright 2017 Prometheus Team
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 syntax = "proto3";
 package prometheus.api.v2;
 
+import "types.proto";
 import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "v2pb";
+option go_package = "tsdbpb";
 
 option (gogoproto.sizer_all) = true;
 option (gogoproto.marshaler_all) = true;
@@ -45,9 +59,9 @@ message AdminTSDBReloadResponse {
 }
 
 message AdminTSDBSeriesDeleteRequest {
-  google.protobuf.Timestamp mint = 1 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
-  google.protobuf.Timestamp maxt = 2 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
-  repeated LabelMatcher matchers = 3;
+  google.protobuf.Timestamp mint       = 1 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  google.protobuf.Timestamp maxt       = 2 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  repeated prometheus.LabelMatcher matchers = 3;
 }
 
 message AdminTSDBSeriesDeleteResponse {
@@ -58,17 +72,4 @@ message AdminTSDBSnapshotRequest {
 
 message AdminTSDBSnapshotResponse {
   string name = 1;
-}
-
-// Matcher specifies a rule, which can match or set of labels or not.
-message LabelMatcher {
-  enum Type {
-    EQ  = 0;
-    NEQ = 1;
-    RE  = 2;
-    NRE = 3;
-  }
-  Type type    = 1;
-  string name  = 2;
-  string value = 3;
 }
