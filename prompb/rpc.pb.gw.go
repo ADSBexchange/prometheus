@@ -27,29 +27,94 @@ var _ io.Reader
 var _ = runtime.String
 var _ = utilities.NewDoubleArray
 
-func request_TSDB_Reload_0(ctx context.Context, marshaler runtime.Marshaler, client TSDBClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+var (
+	filter_Query_Instant_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
+func request_Query_Instant_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq QueryInstantRequest
+	var metadata runtime.ServerMetadata
+
+	if err := runtime.PopulateQueryParameters(&protoReq, req.URL.Query(), filter_Query_Instant_0); err != nil {
+		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.Instant(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+var (
+	filter_Query_Range_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
+func request_Query_Range_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq QueryRangeRequest
+	var metadata runtime.ServerMetadata
+
+	if err := runtime.PopulateQueryParameters(&protoReq, req.URL.Query(), filter_Query_Range_0); err != nil {
+		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.Range(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func request_Query_Label_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq LabelRequest
+	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["name"]
+	if !ok {
+		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
+	}
+
+	protoReq.Name, err = runtime.String(val)
+
+	if err != nil {
+		return nil, metadata, err
+	}
+
+	msg, err := client.Label(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func request_Admin_TSDBReload_0(ctx context.Context, marshaler runtime.Marshaler, client AdminClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq TSDBReloadRequest
 	var metadata runtime.ServerMetadata
 
-	msg, err := client.Reload(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.TSDBReload(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func request_TSDB_Snapshot_0(ctx context.Context, marshaler runtime.Marshaler, client TSDBClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_Admin_TSDBSnapshot_0(ctx context.Context, marshaler runtime.Marshaler, client AdminClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq TSDBSnapshotRequest
 	var metadata runtime.ServerMetadata
 
-	msg, err := client.Snapshot(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.TSDBSnapshot(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func request_TSDB_DeleteSeries_0(ctx context.Context, marshaler runtime.Marshaler, client TSDBClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq TSDBSeriesDeleteRequest
+var (
+	filter_Admin_DeleteSeries_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
+func request_Admin_DeleteSeries_0(ctx context.Context, marshaler runtime.Marshaler, client AdminClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq SeriesDeleteRequest
 	var metadata runtime.ServerMetadata
 
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.URL.Query(), filter_Admin_DeleteSeries_0); err != nil {
 		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -58,9 +123,54 @@ func request_TSDB_DeleteSeries_0(ctx context.Context, marshaler runtime.Marshale
 
 }
 
-// RegisterTSDBHandlerFromEndpoint is same as RegisterTSDBHandler but
+func request_Status_Targets_0(ctx context.Context, marshaler runtime.Marshaler, client StatusClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq TargetsRequest
+	var metadata runtime.ServerMetadata
+
+	msg, err := client.Targets(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func request_Status_Alertmanagers_0(ctx context.Context, marshaler runtime.Marshaler, client StatusClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq AlertmanagersRequest
+	var metadata runtime.ServerMetadata
+
+	msg, err := client.Alertmanagers(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func request_Status_Health_0(ctx context.Context, marshaler runtime.Marshaler, client StatusClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq HealthRequest
+	var metadata runtime.ServerMetadata
+
+	msg, err := client.Health(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func request_Status_Readiness_0(ctx context.Context, marshaler runtime.Marshaler, client StatusClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ReadinessRequest
+	var metadata runtime.ServerMetadata
+
+	msg, err := client.Readiness(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func request_Status_Config_0(ctx context.Context, marshaler runtime.Marshaler, client StatusClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ConfigRequest
+	var metadata runtime.ServerMetadata
+
+	msg, err := client.Config(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+// RegisterQueryHandlerFromEndpoint is same as RegisterQueryHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
-func RegisterTSDBHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+func RegisterQueryHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
 	conn, err := grpc.Dial(endpoint, opts...)
 	if err != nil {
 		return err
@@ -80,15 +190,15 @@ func RegisterTSDBHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux,
 		}()
 	}()
 
-	return RegisterTSDBHandler(ctx, mux, conn)
+	return RegisterQueryHandler(ctx, mux, conn)
 }
 
-// RegisterTSDBHandler registers the http handlers for service TSDB to "mux".
+// RegisterQueryHandler registers the http handlers for service Query to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
-func RegisterTSDBHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	client := NewTSDBClient(conn)
+func RegisterQueryHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	client := NewQueryClient(conn)
 
-	mux.Handle("GET", pattern_TSDB_Reload_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Query_Instant_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 		if cn, ok := w.(http.CloseNotifier); ok {
@@ -105,18 +215,18 @@ func RegisterTSDBHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.
 		if err != nil {
 			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
 		}
-		resp, md, err := request_TSDB_Reload_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Query_Instant_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_TSDB_Reload_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Query_Instant_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_TSDB_Snapshot_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Query_Range_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 		if cn, ok := w.(http.CloseNotifier); ok {
@@ -133,18 +243,18 @@ func RegisterTSDBHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.
 		if err != nil {
 			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
 		}
-		resp, md, err := request_TSDB_Snapshot_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Query_Range_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_TSDB_Snapshot_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Query_Range_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_TSDB_DeleteSeries_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Query_Label_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 		if cn, ok := w.(http.CloseNotifier); ok {
@@ -161,14 +271,14 @@ func RegisterTSDBHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.
 		if err != nil {
 			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
 		}
-		resp, md, err := request_TSDB_DeleteSeries_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Query_Label_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_TSDB_DeleteSeries_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Query_Label_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -176,17 +286,347 @@ func RegisterTSDBHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.
 }
 
 var (
-	pattern_TSDB_Reload_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "admin", "tsdb", "reload"}, ""))
+	pattern_Query_Instant_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v2", "query"}, ""))
 
-	pattern_TSDB_Snapshot_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "admin", "tsdb", "snapshot"}, ""))
+	pattern_Query_Range_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v2", "query_range"}, ""))
 
-	pattern_TSDB_DeleteSeries_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "admin", "tsdb", "delete_series"}, ""))
+	pattern_Query_Label_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v2", "label", "name"}, ""))
 )
 
 var (
-	forward_TSDB_Reload_0 = runtime.ForwardResponseMessage
+	forward_Query_Instant_0 = runtime.ForwardResponseMessage
 
-	forward_TSDB_Snapshot_0 = runtime.ForwardResponseMessage
+	forward_Query_Range_0 = runtime.ForwardResponseMessage
 
-	forward_TSDB_DeleteSeries_0 = runtime.ForwardResponseMessage
+	forward_Query_Label_0 = runtime.ForwardResponseMessage
+)
+
+// RegisterAdminHandlerFromEndpoint is same as RegisterAdminHandler but
+// automatically dials to "endpoint" and closes the connection when "ctx" gets done.
+func RegisterAdminHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+	conn, err := grpc.Dial(endpoint, opts...)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			if cerr := conn.Close(); cerr != nil {
+				grpclog.Printf("Failed to close conn to %s: %v", endpoint, cerr)
+			}
+			return
+		}
+		go func() {
+			<-ctx.Done()
+			if cerr := conn.Close(); cerr != nil {
+				grpclog.Printf("Failed to close conn to %s: %v", endpoint, cerr)
+			}
+		}()
+	}()
+
+	return RegisterAdminHandler(ctx, mux, conn)
+}
+
+// RegisterAdminHandler registers the http handlers for service Admin to "mux".
+// The handlers forward requests to the grpc endpoint over "conn".
+func RegisterAdminHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	client := NewAdminClient(conn)
+
+	mux.Handle("GET", pattern_Admin_TSDBReload_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		if cn, ok := w.(http.CloseNotifier); ok {
+			go func(done <-chan struct{}, closed <-chan bool) {
+				select {
+				case <-done:
+				case <-closed:
+					cancel()
+				}
+			}(ctx.Done(), cn.CloseNotify())
+		}
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, req)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+		}
+		resp, md, err := request_Admin_TSDBReload_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Admin_TSDBReload_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_Admin_TSDBSnapshot_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		if cn, ok := w.(http.CloseNotifier); ok {
+			go func(done <-chan struct{}, closed <-chan bool) {
+				select {
+				case <-done:
+				case <-closed:
+					cancel()
+				}
+			}(ctx.Done(), cn.CloseNotify())
+		}
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, req)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+		}
+		resp, md, err := request_Admin_TSDBSnapshot_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Admin_TSDBSnapshot_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("DELETE", pattern_Admin_DeleteSeries_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		if cn, ok := w.(http.CloseNotifier); ok {
+			go func(done <-chan struct{}, closed <-chan bool) {
+				select {
+				case <-done:
+				case <-closed:
+					cancel()
+				}
+			}(ctx.Done(), cn.CloseNotify())
+		}
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, req)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+		}
+		resp, md, err := request_Admin_DeleteSeries_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Admin_DeleteSeries_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	return nil
+}
+
+var (
+	pattern_Admin_TSDBReload_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"admin", "v1", "tsdb", "reload"}, ""))
+
+	pattern_Admin_TSDBSnapshot_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"admin", "v1", "tsdb", "snapshot"}, ""))
+
+	pattern_Admin_DeleteSeries_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"admin", "v1", "series"}, ""))
+)
+
+var (
+	forward_Admin_TSDBReload_0 = runtime.ForwardResponseMessage
+
+	forward_Admin_TSDBSnapshot_0 = runtime.ForwardResponseMessage
+
+	forward_Admin_DeleteSeries_0 = runtime.ForwardResponseMessage
+)
+
+// RegisterStatusHandlerFromEndpoint is same as RegisterStatusHandler but
+// automatically dials to "endpoint" and closes the connection when "ctx" gets done.
+func RegisterStatusHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+	conn, err := grpc.Dial(endpoint, opts...)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			if cerr := conn.Close(); cerr != nil {
+				grpclog.Printf("Failed to close conn to %s: %v", endpoint, cerr)
+			}
+			return
+		}
+		go func() {
+			<-ctx.Done()
+			if cerr := conn.Close(); cerr != nil {
+				grpclog.Printf("Failed to close conn to %s: %v", endpoint, cerr)
+			}
+		}()
+	}()
+
+	return RegisterStatusHandler(ctx, mux, conn)
+}
+
+// RegisterStatusHandler registers the http handlers for service Status to "mux".
+// The handlers forward requests to the grpc endpoint over "conn".
+func RegisterStatusHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	client := NewStatusClient(conn)
+
+	mux.Handle("GET", pattern_Status_Targets_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		if cn, ok := w.(http.CloseNotifier); ok {
+			go func(done <-chan struct{}, closed <-chan bool) {
+				select {
+				case <-done:
+				case <-closed:
+					cancel()
+				}
+			}(ctx.Done(), cn.CloseNotify())
+		}
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, req)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+		}
+		resp, md, err := request_Status_Targets_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Status_Targets_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_Status_Alertmanagers_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		if cn, ok := w.(http.CloseNotifier); ok {
+			go func(done <-chan struct{}, closed <-chan bool) {
+				select {
+				case <-done:
+				case <-closed:
+					cancel()
+				}
+			}(ctx.Done(), cn.CloseNotify())
+		}
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, req)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+		}
+		resp, md, err := request_Status_Alertmanagers_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Status_Alertmanagers_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_Status_Health_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		if cn, ok := w.(http.CloseNotifier); ok {
+			go func(done <-chan struct{}, closed <-chan bool) {
+				select {
+				case <-done:
+				case <-closed:
+					cancel()
+				}
+			}(ctx.Done(), cn.CloseNotify())
+		}
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, req)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+		}
+		resp, md, err := request_Status_Health_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Status_Health_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_Status_Readiness_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		if cn, ok := w.(http.CloseNotifier); ok {
+			go func(done <-chan struct{}, closed <-chan bool) {
+				select {
+				case <-done:
+				case <-closed:
+					cancel()
+				}
+			}(ctx.Done(), cn.CloseNotify())
+		}
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, req)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+		}
+		resp, md, err := request_Status_Readiness_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Status_Readiness_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_Status_Config_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		if cn, ok := w.(http.CloseNotifier); ok {
+			go func(done <-chan struct{}, closed <-chan bool) {
+				select {
+				case <-done:
+				case <-closed:
+					cancel()
+				}
+			}(ctx.Done(), cn.CloseNotify())
+		}
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, req)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+		}
+		resp, md, err := request_Status_Config_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Status_Config_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	return nil
+}
+
+var (
+	pattern_Status_Targets_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "status", "targets"}, ""))
+
+	pattern_Status_Alertmanagers_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "status", "alertmanagers"}, ""))
+
+	pattern_Status_Health_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "status", "health"}, ""))
+
+	pattern_Status_Readiness_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "status", "ready"}, ""))
+
+	pattern_Status_Config_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "status", "config"}, ""))
+)
+
+var (
+	forward_Status_Targets_0 = runtime.ForwardResponseMessage
+
+	forward_Status_Alertmanagers_0 = runtime.ForwardResponseMessage
+
+	forward_Status_Health_0 = runtime.ForwardResponseMessage
+
+	forward_Status_Readiness_0 = runtime.ForwardResponseMessage
+
+	forward_Status_Config_0 = runtime.ForwardResponseMessage
 )

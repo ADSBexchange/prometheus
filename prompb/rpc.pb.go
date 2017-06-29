@@ -10,37 +10,43 @@
 		types.proto
 
 	It has these top-level messages:
-		QueryRequest
+		QueryInstantRequest
+		QueryRangeRequest
 		QueryResponse
 		RawQueryRequest
-		LabelInfoRequest
-		LabelInfoResponse
+		LabelRequest
+		LabelResponse
 		SeriesRequest
+		SeriesInfo
 		SeriesResponse
-		WriteRequest
-		WriteResponse
+		RemoteWriteRequest
+		RemoteWriteResponse
 		TSDBReloadRequest
 		TSDBReloadResponse
-		TSDBSeriesDeleteRequest
-		TSDBSeriesDeleteResponse
 		TSDBSnapshotRequest
 		TSDBSnapshotResponse
+		SeriesDeleteRequest
+		SeriesDeleteResponse
 		TargetsRequest
 		TargetStatus
 		Target
 		TargetsResponse
 		AlertmanagersRequest
+		Alertmanager
 		AlertmanagersResponse
 		HealthRequest
 		HealthResponse
 		ReadinessRequest
 		ReadinessResponse
+		ConfigRequest
+		ConfigResponse
 		TimeRange
 		Sample
 		TimeSeries
 		Label
 		Labels
 		LabelMatcher
+		Selector
 */
 package prompb
 
@@ -95,17 +101,33 @@ var TargetStatus_Health_value = map[string]int32{
 func (x TargetStatus_Health) String() string {
 	return proto.EnumName(TargetStatus_Health_name, int32(x))
 }
-func (TargetStatus_Health) EnumDescriptor() ([]byte, []int) { return fileDescriptorRpc, []int{16, 0} }
+func (TargetStatus_Health) EnumDescriptor() ([]byte, []int) { return fileDescriptorRpc, []int{18, 0} }
 
-type QueryRequest struct {
+type QueryInstantRequest struct {
+	// Time range for which to return data.
 	Range *TimeRange `protobuf:"bytes,1,opt,name=range" json:"range,omitempty"`
-	Expr  string     `protobuf:"bytes,2,opt,name=expr,proto3" json:"expr,omitempty"`
+	// PromQL formatted query expression.
+	Expr string `protobuf:"bytes,2,opt,name=expr,proto3" json:"expr,omitempty"`
 }
 
-func (m *QueryRequest) Reset()                    { *m = QueryRequest{} }
-func (m *QueryRequest) String() string            { return proto.CompactTextString(m) }
-func (*QueryRequest) ProtoMessage()               {}
-func (*QueryRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{0} }
+func (m *QueryInstantRequest) Reset()                    { *m = QueryInstantRequest{} }
+func (m *QueryInstantRequest) String() string            { return proto.CompactTextString(m) }
+func (*QueryInstantRequest) ProtoMessage()               {}
+func (*QueryInstantRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{0} }
+
+type QueryRangeRequest struct {
+	// Time range for which to return data.
+	Range   *TimeRange    `protobuf:"bytes,1,opt,name=range" json:"range,omitempty"`
+	Step    time.Duration `protobuf:"bytes,2,opt,name=step,stdduration" json:"step"`
+	Timeout time.Duration `protobuf:"bytes,3,opt,name=timeout,stdduration" json:"timeout"`
+	// PromQL formatted query expression.
+	Expr string `protobuf:"bytes,4,opt,name=expr,proto3" json:"expr,omitempty"`
+}
+
+func (m *QueryRangeRequest) Reset()                    { *m = QueryRangeRequest{} }
+func (m *QueryRangeRequest) String() string            { return proto.CompactTextString(m) }
+func (*QueryRangeRequest) ProtoMessage()               {}
+func (*QueryRangeRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{1} }
 
 type QueryResponse struct {
 	Series []*TimeSeries `protobuf:"bytes,1,rep,name=series" json:"series,omitempty"`
@@ -114,71 +136,192 @@ type QueryResponse struct {
 func (m *QueryResponse) Reset()                    { *m = QueryResponse{} }
 func (m *QueryResponse) String() string            { return proto.CompactTextString(m) }
 func (*QueryResponse) ProtoMessage()               {}
-func (*QueryResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{1} }
+func (*QueryResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{2} }
 
 type RawQueryRequest struct {
-	Range    *TimeRange      `protobuf:"bytes,1,opt,name=range" json:"range,omitempty"`
-	Matchers []*LabelMatcher `protobuf:"bytes,2,rep,name=matchers" json:"matchers,omitempty"`
+	Range    TimeRange      `protobuf:"bytes,1,opt,name=range" json:"range"`
+	Matchers []LabelMatcher `protobuf:"bytes,2,rep,name=matchers" json:"matchers"`
 }
 
 func (m *RawQueryRequest) Reset()                    { *m = RawQueryRequest{} }
 func (m *RawQueryRequest) String() string            { return proto.CompactTextString(m) }
 func (*RawQueryRequest) ProtoMessage()               {}
-func (*RawQueryRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{2} }
+func (*RawQueryRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{3} }
 
-type LabelInfoRequest struct {
+type LabelRequest struct {
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 }
 
-func (m *LabelInfoRequest) Reset()                    { *m = LabelInfoRequest{} }
-func (m *LabelInfoRequest) String() string            { return proto.CompactTextString(m) }
-func (*LabelInfoRequest) ProtoMessage()               {}
-func (*LabelInfoRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{3} }
+func (m *LabelRequest) Reset()                    { *m = LabelRequest{} }
+func (m *LabelRequest) String() string            { return proto.CompactTextString(m) }
+func (*LabelRequest) ProtoMessage()               {}
+func (*LabelRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{4} }
 
-type LabelInfoResponse struct {
+type LabelResponse struct {
 	Values []string `protobuf:"bytes,1,rep,name=values" json:"values,omitempty"`
 }
 
-func (m *LabelInfoResponse) Reset()                    { *m = LabelInfoResponse{} }
-func (m *LabelInfoResponse) String() string            { return proto.CompactTextString(m) }
-func (*LabelInfoResponse) ProtoMessage()               {}
-func (*LabelInfoResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{4} }
+func (m *LabelResponse) Reset()                    { *m = LabelResponse{} }
+func (m *LabelResponse) String() string            { return proto.CompactTextString(m) }
+func (*LabelResponse) ProtoMessage()               {}
+func (*LabelResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{5} }
 
 type SeriesRequest struct {
-	Range    *TimeRange      `protobuf:"bytes,1,opt,name=range" json:"range,omitempty"`
-	Matchers []*LabelMatcher `protobuf:"bytes,2,rep,name=matchers" json:"matchers,omitempty"`
+	Range *TimeRange `protobuf:"bytes,1,opt,name=range" json:"range,omitempty"`
+	// Fully typed or string based selector of series.
+	//
+	// Types that are valid to be assigned to SelectorOrQuery:
+	//	*SeriesRequest_Selector
+	//	*SeriesRequest_Query
+	SelectorOrQuery isSeriesRequest_SelectorOrQuery `protobuf_oneof:"selector_or_query"`
 }
 
 func (m *SeriesRequest) Reset()                    { *m = SeriesRequest{} }
 func (m *SeriesRequest) String() string            { return proto.CompactTextString(m) }
 func (*SeriesRequest) ProtoMessage()               {}
-func (*SeriesRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{5} }
+func (*SeriesRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{6} }
+
+type isSeriesRequest_SelectorOrQuery interface {
+	isSeriesRequest_SelectorOrQuery()
+	MarshalTo([]byte) (int, error)
+	Size() int
+}
+
+type SeriesRequest_Selector struct {
+	Selector *Selector `protobuf:"bytes,2,opt,name=selector,oneof"`
+}
+type SeriesRequest_Query struct {
+	Query string `protobuf:"bytes,3,opt,name=query,proto3,oneof"`
+}
+
+func (*SeriesRequest_Selector) isSeriesRequest_SelectorOrQuery() {}
+func (*SeriesRequest_Query) isSeriesRequest_SelectorOrQuery()    {}
+
+func (m *SeriesRequest) GetSelectorOrQuery() isSeriesRequest_SelectorOrQuery {
+	if m != nil {
+		return m.SelectorOrQuery
+	}
+	return nil
+}
+
+func (m *SeriesRequest) GetSelector() *Selector {
+	if x, ok := m.GetSelectorOrQuery().(*SeriesRequest_Selector); ok {
+		return x.Selector
+	}
+	return nil
+}
+
+func (m *SeriesRequest) GetQuery() string {
+	if x, ok := m.GetSelectorOrQuery().(*SeriesRequest_Query); ok {
+		return x.Query
+	}
+	return ""
+}
+
+// XXX_OneofFuncs is for the internal use of the proto package.
+func (*SeriesRequest) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
+	return _SeriesRequest_OneofMarshaler, _SeriesRequest_OneofUnmarshaler, _SeriesRequest_OneofSizer, []interface{}{
+		(*SeriesRequest_Selector)(nil),
+		(*SeriesRequest_Query)(nil),
+	}
+}
+
+func _SeriesRequest_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
+	m := msg.(*SeriesRequest)
+	// selector_or_query
+	switch x := m.SelectorOrQuery.(type) {
+	case *SeriesRequest_Selector:
+		_ = b.EncodeVarint(2<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Selector); err != nil {
+			return err
+		}
+	case *SeriesRequest_Query:
+		_ = b.EncodeVarint(3<<3 | proto.WireBytes)
+		_ = b.EncodeStringBytes(x.Query)
+	case nil:
+	default:
+		return fmt.Errorf("SeriesRequest.SelectorOrQuery has unexpected type %T", x)
+	}
+	return nil
+}
+
+func _SeriesRequest_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
+	m := msg.(*SeriesRequest)
+	switch tag {
+	case 2: // selector_or_query.selector
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(Selector)
+		err := b.DecodeMessage(msg)
+		m.SelectorOrQuery = &SeriesRequest_Selector{msg}
+		return true, err
+	case 3: // selector_or_query.query
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		x, err := b.DecodeStringBytes()
+		m.SelectorOrQuery = &SeriesRequest_Query{x}
+		return true, err
+	default:
+		return false, nil
+	}
+}
+
+func _SeriesRequest_OneofSizer(msg proto.Message) (n int) {
+	m := msg.(*SeriesRequest)
+	// selector_or_query
+	switch x := m.SelectorOrQuery.(type) {
+	case *SeriesRequest_Selector:
+		s := proto.Size(x.Selector)
+		n += proto.SizeVarint(2<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *SeriesRequest_Query:
+		n += proto.SizeVarint(3<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(len(x.Query)))
+		n += len(x.Query)
+	case nil:
+	default:
+		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
+	}
+	return n
+}
+
+type SeriesInfo struct {
+	Labels Labels `protobuf:"bytes,1,opt,name=labels" json:"labels"`
+}
+
+func (m *SeriesInfo) Reset()                    { *m = SeriesInfo{} }
+func (m *SeriesInfo) String() string            { return proto.CompactTextString(m) }
+func (*SeriesInfo) ProtoMessage()               {}
+func (*SeriesInfo) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{7} }
 
 type SeriesResponse struct {
-	Series []*Labels `protobuf:"bytes,1,rep,name=series" json:"series,omitempty"`
+	Series []*SeriesInfo `protobuf:"bytes,1,rep,name=series" json:"series,omitempty"`
 }
 
 func (m *SeriesResponse) Reset()                    { *m = SeriesResponse{} }
 func (m *SeriesResponse) String() string            { return proto.CompactTextString(m) }
 func (*SeriesResponse) ProtoMessage()               {}
-func (*SeriesResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{6} }
+func (*SeriesResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{8} }
 
-type WriteRequest struct {
+type RemoteWriteRequest struct {
 	Series []*TimeSeries `protobuf:"bytes,1,rep,name=series" json:"series,omitempty"`
 }
 
-func (m *WriteRequest) Reset()                    { *m = WriteRequest{} }
-func (m *WriteRequest) String() string            { return proto.CompactTextString(m) }
-func (*WriteRequest) ProtoMessage()               {}
-func (*WriteRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{7} }
+func (m *RemoteWriteRequest) Reset()                    { *m = RemoteWriteRequest{} }
+func (m *RemoteWriteRequest) String() string            { return proto.CompactTextString(m) }
+func (*RemoteWriteRequest) ProtoMessage()               {}
+func (*RemoteWriteRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{9} }
 
-type WriteResponse struct {
+type RemoteWriteResponse struct {
 }
 
-func (m *WriteResponse) Reset()                    { *m = WriteResponse{} }
-func (m *WriteResponse) String() string            { return proto.CompactTextString(m) }
-func (*WriteResponse) ProtoMessage()               {}
-func (*WriteResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{8} }
+func (m *RemoteWriteResponse) Reset()                    { *m = RemoteWriteResponse{} }
+func (m *RemoteWriteResponse) String() string            { return proto.CompactTextString(m) }
+func (*RemoteWriteResponse) ProtoMessage()               {}
+func (*RemoteWriteResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{10} }
 
 type TSDBReloadRequest struct {
 }
@@ -186,7 +329,7 @@ type TSDBReloadRequest struct {
 func (m *TSDBReloadRequest) Reset()                    { *m = TSDBReloadRequest{} }
 func (m *TSDBReloadRequest) String() string            { return proto.CompactTextString(m) }
 func (*TSDBReloadRequest) ProtoMessage()               {}
-func (*TSDBReloadRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{9} }
+func (*TSDBReloadRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{11} }
 
 type TSDBReloadResponse struct {
 }
@@ -194,25 +337,7 @@ type TSDBReloadResponse struct {
 func (m *TSDBReloadResponse) Reset()                    { *m = TSDBReloadResponse{} }
 func (m *TSDBReloadResponse) String() string            { return proto.CompactTextString(m) }
 func (*TSDBReloadResponse) ProtoMessage()               {}
-func (*TSDBReloadResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{10} }
-
-type TSDBSeriesDeleteRequest struct {
-	Range    *TimeRange      `protobuf:"bytes,1,opt,name=range" json:"range,omitempty"`
-	Matchers []*LabelMatcher `protobuf:"bytes,2,rep,name=matchers" json:"matchers,omitempty"`
-}
-
-func (m *TSDBSeriesDeleteRequest) Reset()                    { *m = TSDBSeriesDeleteRequest{} }
-func (m *TSDBSeriesDeleteRequest) String() string            { return proto.CompactTextString(m) }
-func (*TSDBSeriesDeleteRequest) ProtoMessage()               {}
-func (*TSDBSeriesDeleteRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{11} }
-
-type TSDBSeriesDeleteResponse struct {
-}
-
-func (m *TSDBSeriesDeleteResponse) Reset()                    { *m = TSDBSeriesDeleteResponse{} }
-func (m *TSDBSeriesDeleteResponse) String() string            { return proto.CompactTextString(m) }
-func (*TSDBSeriesDeleteResponse) ProtoMessage()               {}
-func (*TSDBSeriesDeleteResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{12} }
+func (*TSDBReloadResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{12} }
 
 type TSDBSnapshotRequest struct {
 }
@@ -231,13 +356,142 @@ func (m *TSDBSnapshotResponse) String() string            { return proto.Compact
 func (*TSDBSnapshotResponse) ProtoMessage()               {}
 func (*TSDBSnapshotResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{14} }
 
+type SeriesDeleteRequest struct {
+	Range *TimeRange `protobuf:"bytes,1,opt,name=range" json:"range,omitempty"`
+	// Types that are valid to be assigned to SelectorOrQuery:
+	//	*SeriesDeleteRequest_Selector
+	//	*SeriesDeleteRequest_Query
+	SelectorOrQuery isSeriesDeleteRequest_SelectorOrQuery `protobuf_oneof:"selector_or_query"`
+}
+
+func (m *SeriesDeleteRequest) Reset()                    { *m = SeriesDeleteRequest{} }
+func (m *SeriesDeleteRequest) String() string            { return proto.CompactTextString(m) }
+func (*SeriesDeleteRequest) ProtoMessage()               {}
+func (*SeriesDeleteRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{15} }
+
+type isSeriesDeleteRequest_SelectorOrQuery interface {
+	isSeriesDeleteRequest_SelectorOrQuery()
+	MarshalTo([]byte) (int, error)
+	Size() int
+}
+
+type SeriesDeleteRequest_Selector struct {
+	Selector *Selector `protobuf:"bytes,2,opt,name=selector,oneof"`
+}
+type SeriesDeleteRequest_Query struct {
+	Query string `protobuf:"bytes,3,opt,name=query,proto3,oneof"`
+}
+
+func (*SeriesDeleteRequest_Selector) isSeriesDeleteRequest_SelectorOrQuery() {}
+func (*SeriesDeleteRequest_Query) isSeriesDeleteRequest_SelectorOrQuery()    {}
+
+func (m *SeriesDeleteRequest) GetSelectorOrQuery() isSeriesDeleteRequest_SelectorOrQuery {
+	if m != nil {
+		return m.SelectorOrQuery
+	}
+	return nil
+}
+
+func (m *SeriesDeleteRequest) GetSelector() *Selector {
+	if x, ok := m.GetSelectorOrQuery().(*SeriesDeleteRequest_Selector); ok {
+		return x.Selector
+	}
+	return nil
+}
+
+func (m *SeriesDeleteRequest) GetQuery() string {
+	if x, ok := m.GetSelectorOrQuery().(*SeriesDeleteRequest_Query); ok {
+		return x.Query
+	}
+	return ""
+}
+
+// XXX_OneofFuncs is for the internal use of the proto package.
+func (*SeriesDeleteRequest) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
+	return _SeriesDeleteRequest_OneofMarshaler, _SeriesDeleteRequest_OneofUnmarshaler, _SeriesDeleteRequest_OneofSizer, []interface{}{
+		(*SeriesDeleteRequest_Selector)(nil),
+		(*SeriesDeleteRequest_Query)(nil),
+	}
+}
+
+func _SeriesDeleteRequest_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
+	m := msg.(*SeriesDeleteRequest)
+	// selector_or_query
+	switch x := m.SelectorOrQuery.(type) {
+	case *SeriesDeleteRequest_Selector:
+		_ = b.EncodeVarint(2<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Selector); err != nil {
+			return err
+		}
+	case *SeriesDeleteRequest_Query:
+		_ = b.EncodeVarint(3<<3 | proto.WireBytes)
+		_ = b.EncodeStringBytes(x.Query)
+	case nil:
+	default:
+		return fmt.Errorf("SeriesDeleteRequest.SelectorOrQuery has unexpected type %T", x)
+	}
+	return nil
+}
+
+func _SeriesDeleteRequest_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
+	m := msg.(*SeriesDeleteRequest)
+	switch tag {
+	case 2: // selector_or_query.selector
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(Selector)
+		err := b.DecodeMessage(msg)
+		m.SelectorOrQuery = &SeriesDeleteRequest_Selector{msg}
+		return true, err
+	case 3: // selector_or_query.query
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		x, err := b.DecodeStringBytes()
+		m.SelectorOrQuery = &SeriesDeleteRequest_Query{x}
+		return true, err
+	default:
+		return false, nil
+	}
+}
+
+func _SeriesDeleteRequest_OneofSizer(msg proto.Message) (n int) {
+	m := msg.(*SeriesDeleteRequest)
+	// selector_or_query
+	switch x := m.SelectorOrQuery.(type) {
+	case *SeriesDeleteRequest_Selector:
+		s := proto.Size(x.Selector)
+		n += proto.SizeVarint(2<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *SeriesDeleteRequest_Query:
+		n += proto.SizeVarint(3<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(len(x.Query)))
+		n += len(x.Query)
+	case nil:
+	default:
+		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
+	}
+	return n
+}
+
+type SeriesDeleteResponse struct {
+	NumDeleted uint64 `protobuf:"varint,1,opt,name=NumDeleted,proto3" json:"NumDeleted,omitempty"`
+}
+
+func (m *SeriesDeleteResponse) Reset()                    { *m = SeriesDeleteResponse{} }
+func (m *SeriesDeleteResponse) String() string            { return proto.CompactTextString(m) }
+func (*SeriesDeleteResponse) ProtoMessage()               {}
+func (*SeriesDeleteResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{16} }
+
 type TargetsRequest struct {
 }
 
 func (m *TargetsRequest) Reset()                    { *m = TargetsRequest{} }
 func (m *TargetsRequest) String() string            { return proto.CompactTextString(m) }
 func (*TargetsRequest) ProtoMessage()               {}
-func (*TargetsRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{15} }
+func (*TargetsRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{17} }
 
 type TargetStatus struct {
 	Health     TargetStatus_Health `protobuf:"varint,1,opt,name=health,proto3,enum=prometheus.TargetStatus_Health" json:"health,omitempty"`
@@ -248,19 +502,19 @@ type TargetStatus struct {
 func (m *TargetStatus) Reset()                    { *m = TargetStatus{} }
 func (m *TargetStatus) String() string            { return proto.CompactTextString(m) }
 func (*TargetStatus) ProtoMessage()               {}
-func (*TargetStatus) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{16} }
+func (*TargetStatus) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{18} }
 
 type Target struct {
-	ScrapeUrl        string        `protobuf:"bytes,1,opt,name=scrape_url,json=scrapeUrl,proto3" json:"scrape_url,omitempty"`
-	Labels           []*Label      `protobuf:"bytes,2,rep,name=labels" json:"labels,omitempty"`
-	DiscoveredLabels []*Label      `protobuf:"bytes,3,rep,name=discovered_labels,json=discoveredLabels" json:"discovered_labels,omitempty"`
-	Status           *TargetStatus `protobuf:"bytes,4,opt,name=status" json:"status,omitempty"`
+	ScrapeUrl        string       `protobuf:"bytes,1,opt,name=scrape_url,json=scrapeUrl,proto3" json:"scrape_url,omitempty"`
+	Labels           Labels       `protobuf:"bytes,2,opt,name=labels" json:"labels"`
+	DiscoveredLabels Labels       `protobuf:"bytes,3,opt,name=discovered_labels,json=discoveredLabels" json:"discovered_labels"`
+	Status           TargetStatus `protobuf:"bytes,4,opt,name=status" json:"status"`
 }
 
 func (m *Target) Reset()                    { *m = Target{} }
 func (m *Target) String() string            { return proto.CompactTextString(m) }
 func (*Target) ProtoMessage()               {}
-func (*Target) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{17} }
+func (*Target) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{19} }
 
 type TargetsResponse struct {
 	Targets []*Target `protobuf:"bytes,1,rep,name=targets" json:"targets,omitempty"`
@@ -269,7 +523,7 @@ type TargetsResponse struct {
 func (m *TargetsResponse) Reset()                    { *m = TargetsResponse{} }
 func (m *TargetsResponse) String() string            { return proto.CompactTextString(m) }
 func (*TargetsResponse) ProtoMessage()               {}
-func (*TargetsResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{18} }
+func (*TargetsResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{20} }
 
 type AlertmanagersRequest struct {
 }
@@ -277,15 +531,25 @@ type AlertmanagersRequest struct {
 func (m *AlertmanagersRequest) Reset()                    { *m = AlertmanagersRequest{} }
 func (m *AlertmanagersRequest) String() string            { return proto.CompactTextString(m) }
 func (*AlertmanagersRequest) ProtoMessage()               {}
-func (*AlertmanagersRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{19} }
+func (*AlertmanagersRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{21} }
+
+type Alertmanager struct {
+	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+}
+
+func (m *Alertmanager) Reset()                    { *m = Alertmanager{} }
+func (m *Alertmanager) String() string            { return proto.CompactTextString(m) }
+func (*Alertmanager) ProtoMessage()               {}
+func (*Alertmanager) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{22} }
 
 type AlertmanagersResponse struct {
+	Alertmanagers []*Alertmanager `protobuf:"bytes,1,rep,name=alertmanagers" json:"alertmanagers,omitempty"`
 }
 
 func (m *AlertmanagersResponse) Reset()                    { *m = AlertmanagersResponse{} }
 func (m *AlertmanagersResponse) String() string            { return proto.CompactTextString(m) }
 func (*AlertmanagersResponse) ProtoMessage()               {}
-func (*AlertmanagersResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{20} }
+func (*AlertmanagersResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{23} }
 
 type HealthRequest struct {
 }
@@ -293,7 +557,7 @@ type HealthRequest struct {
 func (m *HealthRequest) Reset()                    { *m = HealthRequest{} }
 func (m *HealthRequest) String() string            { return proto.CompactTextString(m) }
 func (*HealthRequest) ProtoMessage()               {}
-func (*HealthRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{21} }
+func (*HealthRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{24} }
 
 type HealthResponse struct {
 }
@@ -301,7 +565,7 @@ type HealthResponse struct {
 func (m *HealthResponse) Reset()                    { *m = HealthResponse{} }
 func (m *HealthResponse) String() string            { return proto.CompactTextString(m) }
 func (*HealthResponse) ProtoMessage()               {}
-func (*HealthResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{22} }
+func (*HealthResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{25} }
 
 type ReadinessRequest struct {
 }
@@ -309,7 +573,7 @@ type ReadinessRequest struct {
 func (m *ReadinessRequest) Reset()                    { *m = ReadinessRequest{} }
 func (m *ReadinessRequest) String() string            { return proto.CompactTextString(m) }
 func (*ReadinessRequest) ProtoMessage()               {}
-func (*ReadinessRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{23} }
+func (*ReadinessRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{26} }
 
 type ReadinessResponse struct {
 }
@@ -317,34 +581,55 @@ type ReadinessResponse struct {
 func (m *ReadinessResponse) Reset()                    { *m = ReadinessResponse{} }
 func (m *ReadinessResponse) String() string            { return proto.CompactTextString(m) }
 func (*ReadinessResponse) ProtoMessage()               {}
-func (*ReadinessResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{24} }
+func (*ReadinessResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{27} }
+
+type ConfigRequest struct {
+}
+
+func (m *ConfigRequest) Reset()                    { *m = ConfigRequest{} }
+func (m *ConfigRequest) String() string            { return proto.CompactTextString(m) }
+func (*ConfigRequest) ProtoMessage()               {}
+func (*ConfigRequest) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{28} }
+
+type ConfigResponse struct {
+}
+
+func (m *ConfigResponse) Reset()                    { *m = ConfigResponse{} }
+func (m *ConfigResponse) String() string            { return proto.CompactTextString(m) }
+func (*ConfigResponse) ProtoMessage()               {}
+func (*ConfigResponse) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{29} }
 
 func init() {
-	proto.RegisterType((*QueryRequest)(nil), "prometheus.QueryRequest")
+	proto.RegisterType((*QueryInstantRequest)(nil), "prometheus.QueryInstantRequest")
+	proto.RegisterType((*QueryRangeRequest)(nil), "prometheus.QueryRangeRequest")
 	proto.RegisterType((*QueryResponse)(nil), "prometheus.QueryResponse")
 	proto.RegisterType((*RawQueryRequest)(nil), "prometheus.RawQueryRequest")
-	proto.RegisterType((*LabelInfoRequest)(nil), "prometheus.LabelInfoRequest")
-	proto.RegisterType((*LabelInfoResponse)(nil), "prometheus.LabelInfoResponse")
+	proto.RegisterType((*LabelRequest)(nil), "prometheus.LabelRequest")
+	proto.RegisterType((*LabelResponse)(nil), "prometheus.LabelResponse")
 	proto.RegisterType((*SeriesRequest)(nil), "prometheus.SeriesRequest")
+	proto.RegisterType((*SeriesInfo)(nil), "prometheus.SeriesInfo")
 	proto.RegisterType((*SeriesResponse)(nil), "prometheus.SeriesResponse")
-	proto.RegisterType((*WriteRequest)(nil), "prometheus.WriteRequest")
-	proto.RegisterType((*WriteResponse)(nil), "prometheus.WriteResponse")
+	proto.RegisterType((*RemoteWriteRequest)(nil), "prometheus.RemoteWriteRequest")
+	proto.RegisterType((*RemoteWriteResponse)(nil), "prometheus.RemoteWriteResponse")
 	proto.RegisterType((*TSDBReloadRequest)(nil), "prometheus.TSDBReloadRequest")
 	proto.RegisterType((*TSDBReloadResponse)(nil), "prometheus.TSDBReloadResponse")
-	proto.RegisterType((*TSDBSeriesDeleteRequest)(nil), "prometheus.TSDBSeriesDeleteRequest")
-	proto.RegisterType((*TSDBSeriesDeleteResponse)(nil), "prometheus.TSDBSeriesDeleteResponse")
 	proto.RegisterType((*TSDBSnapshotRequest)(nil), "prometheus.TSDBSnapshotRequest")
 	proto.RegisterType((*TSDBSnapshotResponse)(nil), "prometheus.TSDBSnapshotResponse")
+	proto.RegisterType((*SeriesDeleteRequest)(nil), "prometheus.SeriesDeleteRequest")
+	proto.RegisterType((*SeriesDeleteResponse)(nil), "prometheus.SeriesDeleteResponse")
 	proto.RegisterType((*TargetsRequest)(nil), "prometheus.TargetsRequest")
 	proto.RegisterType((*TargetStatus)(nil), "prometheus.TargetStatus")
 	proto.RegisterType((*Target)(nil), "prometheus.Target")
 	proto.RegisterType((*TargetsResponse)(nil), "prometheus.TargetsResponse")
 	proto.RegisterType((*AlertmanagersRequest)(nil), "prometheus.AlertmanagersRequest")
+	proto.RegisterType((*Alertmanager)(nil), "prometheus.Alertmanager")
 	proto.RegisterType((*AlertmanagersResponse)(nil), "prometheus.AlertmanagersResponse")
 	proto.RegisterType((*HealthRequest)(nil), "prometheus.HealthRequest")
 	proto.RegisterType((*HealthResponse)(nil), "prometheus.HealthResponse")
 	proto.RegisterType((*ReadinessRequest)(nil), "prometheus.ReadinessRequest")
 	proto.RegisterType((*ReadinessResponse)(nil), "prometheus.ReadinessResponse")
+	proto.RegisterType((*ConfigRequest)(nil), "prometheus.ConfigRequest")
+	proto.RegisterType((*ConfigResponse)(nil), "prometheus.ConfigResponse")
 	proto.RegisterEnum("prometheus.TargetStatus_Health", TargetStatus_Health_name, TargetStatus_Health_value)
 }
 
@@ -359,11 +644,9 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for Query service
 
 type QueryClient interface {
-	Instant(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*QueryRequest, error)
-	Range(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*QueryResponse, error)
-	RawRange(ctx context.Context, in *RawQueryRequest, opts ...grpc.CallOption) (*QueryResponse, error)
-	LabelInfo(ctx context.Context, in *LabelInfoRequest, opts ...grpc.CallOption) (*LabelInfoResponse, error)
-	Series(ctx context.Context, in *SeriesRequest, opts ...grpc.CallOption) (*SeriesResponse, error)
+	Instant(ctx context.Context, in *QueryInstantRequest, opts ...grpc.CallOption) (*QueryResponse, error)
+	Range(ctx context.Context, in *QueryRangeRequest, opts ...grpc.CallOption) (*QueryResponse, error)
+	Label(ctx context.Context, in *LabelRequest, opts ...grpc.CallOption) (*LabelResponse, error)
 }
 
 type queryClient struct {
@@ -374,8 +657,8 @@ func NewQueryClient(cc *grpc.ClientConn) QueryClient {
 	return &queryClient{cc}
 }
 
-func (c *queryClient) Instant(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*QueryRequest, error) {
-	out := new(QueryRequest)
+func (c *queryClient) Instant(ctx context.Context, in *QueryInstantRequest, opts ...grpc.CallOption) (*QueryResponse, error) {
+	out := new(QueryResponse)
 	err := grpc.Invoke(ctx, "/prometheus.Query/Instant", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
@@ -383,7 +666,7 @@ func (c *queryClient) Instant(ctx context.Context, in *QueryRequest, opts ...grp
 	return out, nil
 }
 
-func (c *queryClient) Range(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*QueryResponse, error) {
+func (c *queryClient) Range(ctx context.Context, in *QueryRangeRequest, opts ...grpc.CallOption) (*QueryResponse, error) {
 	out := new(QueryResponse)
 	err := grpc.Invoke(ctx, "/prometheus.Query/Range", in, out, c.cc, opts...)
 	if err != nil {
@@ -392,27 +675,9 @@ func (c *queryClient) Range(ctx context.Context, in *QueryRequest, opts ...grpc.
 	return out, nil
 }
 
-func (c *queryClient) RawRange(ctx context.Context, in *RawQueryRequest, opts ...grpc.CallOption) (*QueryResponse, error) {
-	out := new(QueryResponse)
-	err := grpc.Invoke(ctx, "/prometheus.Query/RawRange", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *queryClient) LabelInfo(ctx context.Context, in *LabelInfoRequest, opts ...grpc.CallOption) (*LabelInfoResponse, error) {
-	out := new(LabelInfoResponse)
-	err := grpc.Invoke(ctx, "/prometheus.Query/LabelInfo", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *queryClient) Series(ctx context.Context, in *SeriesRequest, opts ...grpc.CallOption) (*SeriesResponse, error) {
-	out := new(SeriesResponse)
-	err := grpc.Invoke(ctx, "/prometheus.Query/Series", in, out, c.cc, opts...)
+func (c *queryClient) Label(ctx context.Context, in *LabelRequest, opts ...grpc.CallOption) (*LabelResponse, error) {
+	out := new(LabelResponse)
+	err := grpc.Invoke(ctx, "/prometheus.Query/Label", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -422,11 +687,9 @@ func (c *queryClient) Series(ctx context.Context, in *SeriesRequest, opts ...grp
 // Server API for Query service
 
 type QueryServer interface {
-	Instant(context.Context, *QueryRequest) (*QueryRequest, error)
-	Range(context.Context, *QueryRequest) (*QueryResponse, error)
-	RawRange(context.Context, *RawQueryRequest) (*QueryResponse, error)
-	LabelInfo(context.Context, *LabelInfoRequest) (*LabelInfoResponse, error)
-	Series(context.Context, *SeriesRequest) (*SeriesResponse, error)
+	Instant(context.Context, *QueryInstantRequest) (*QueryResponse, error)
+	Range(context.Context, *QueryRangeRequest) (*QueryResponse, error)
+	Label(context.Context, *LabelRequest) (*LabelResponse, error)
 }
 
 func RegisterQueryServer(s *grpc.Server, srv QueryServer) {
@@ -434,7 +697,7 @@ func RegisterQueryServer(s *grpc.Server, srv QueryServer) {
 }
 
 func _Query_Instant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryRequest)
+	in := new(QueryInstantRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -446,13 +709,13 @@ func _Query_Instant_Handler(srv interface{}, ctx context.Context, dec func(inter
 		FullMethod: "/prometheus.Query/Instant",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).Instant(ctx, req.(*QueryRequest))
+		return srv.(QueryServer).Instant(ctx, req.(*QueryInstantRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Query_Range_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryRequest)
+	in := new(QueryRangeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -464,61 +727,25 @@ func _Query_Range_Handler(srv interface{}, ctx context.Context, dec func(interfa
 		FullMethod: "/prometheus.Query/Range",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).Range(ctx, req.(*QueryRequest))
+		return srv.(QueryServer).Range(ctx, req.(*QueryRangeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_RawRange_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RawQueryRequest)
+func _Query_Label_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LabelRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).RawRange(ctx, in)
+		return srv.(QueryServer).Label(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/prometheus.Query/RawRange",
+		FullMethod: "/prometheus.Query/Label",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).RawRange(ctx, req.(*RawQueryRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Query_LabelInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(LabelInfoRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(QueryServer).LabelInfo(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/prometheus.Query/LabelInfo",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).LabelInfo(ctx, req.(*LabelInfoRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Query_Series_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SeriesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(QueryServer).Series(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/prometheus.Query/Series",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).Series(ctx, req.(*SeriesRequest))
+		return srv.(QueryServer).Label(ctx, req.(*LabelRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -536,218 +763,146 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_Range_Handler,
 		},
 		{
-			MethodName: "RawRange",
-			Handler:    _Query_RawRange_Handler,
-		},
-		{
-			MethodName: "LabelInfo",
-			Handler:    _Query_LabelInfo_Handler,
-		},
-		{
-			MethodName: "Series",
-			Handler:    _Query_Series_Handler,
+			MethodName: "Label",
+			Handler:    _Query_Label_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "rpc.proto",
 }
 
-// Client API for RemoteWrite service
+// Client API for Admin service
 
-type RemoteWriteClient interface {
-	Write(ctx context.Context, in *WriteRequest, opts ...grpc.CallOption) (*WriteResponse, error)
-}
-
-type remoteWriteClient struct {
-	cc *grpc.ClientConn
-}
-
-func NewRemoteWriteClient(cc *grpc.ClientConn) RemoteWriteClient {
-	return &remoteWriteClient{cc}
-}
-
-func (c *remoteWriteClient) Write(ctx context.Context, in *WriteRequest, opts ...grpc.CallOption) (*WriteResponse, error) {
-	out := new(WriteResponse)
-	err := grpc.Invoke(ctx, "/prometheus.RemoteWrite/Write", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// Server API for RemoteWrite service
-
-type RemoteWriteServer interface {
-	Write(context.Context, *WriteRequest) (*WriteResponse, error)
-}
-
-func RegisterRemoteWriteServer(s *grpc.Server, srv RemoteWriteServer) {
-	s.RegisterService(&_RemoteWrite_serviceDesc, srv)
-}
-
-func _RemoteWrite_Write_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(WriteRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(RemoteWriteServer).Write(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/prometheus.RemoteWrite/Write",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RemoteWriteServer).Write(ctx, req.(*WriteRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-var _RemoteWrite_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "prometheus.RemoteWrite",
-	HandlerType: (*RemoteWriteServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Write",
-			Handler:    _RemoteWrite_Write_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "rpc.proto",
-}
-
-// Client API for TSDB service
-
-type TSDBClient interface {
+type AdminClient interface {
 	// Reload triggers a reload of block data.
-	Reload(ctx context.Context, in *TSDBReloadRequest, opts ...grpc.CallOption) (*TSDBReloadResponse, error)
-	// Snapshot creates a snapshot of all current data into 'snapshots/<datetime>' under
+	TSDBReload(ctx context.Context, in *TSDBReloadRequest, opts ...grpc.CallOption) (*TSDBReloadResponse, error)
+	// Snapshot creates a snapshot of all current data into 'snapshots/<datetime>-<rand>' under
 	// the TSDB's date directory.
-	Snapshot(ctx context.Context, in *TSDBSnapshotRequest, opts ...grpc.CallOption) (*TSDBSnapshotResponse, error)
+	TSDBSnapshot(ctx context.Context, in *TSDBSnapshotRequest, opts ...grpc.CallOption) (*TSDBSnapshotResponse, error)
 	// DeleteSeries deletes data for a selection of series in a time range.
-	DeleteSeries(ctx context.Context, in *TSDBSeriesDeleteRequest, opts ...grpc.CallOption) (*TSDBSeriesDeleteResponse, error)
+	DeleteSeries(ctx context.Context, in *SeriesDeleteRequest, opts ...grpc.CallOption) (*SeriesDeleteResponse, error)
 }
 
-type tSDBClient struct {
+type adminClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewTSDBClient(cc *grpc.ClientConn) TSDBClient {
-	return &tSDBClient{cc}
+func NewAdminClient(cc *grpc.ClientConn) AdminClient {
+	return &adminClient{cc}
 }
 
-func (c *tSDBClient) Reload(ctx context.Context, in *TSDBReloadRequest, opts ...grpc.CallOption) (*TSDBReloadResponse, error) {
+func (c *adminClient) TSDBReload(ctx context.Context, in *TSDBReloadRequest, opts ...grpc.CallOption) (*TSDBReloadResponse, error) {
 	out := new(TSDBReloadResponse)
-	err := grpc.Invoke(ctx, "/prometheus.TSDB/Reload", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/prometheus.Admin/TSDBReload", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *tSDBClient) Snapshot(ctx context.Context, in *TSDBSnapshotRequest, opts ...grpc.CallOption) (*TSDBSnapshotResponse, error) {
+func (c *adminClient) TSDBSnapshot(ctx context.Context, in *TSDBSnapshotRequest, opts ...grpc.CallOption) (*TSDBSnapshotResponse, error) {
 	out := new(TSDBSnapshotResponse)
-	err := grpc.Invoke(ctx, "/prometheus.TSDB/Snapshot", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/prometheus.Admin/TSDBSnapshot", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *tSDBClient) DeleteSeries(ctx context.Context, in *TSDBSeriesDeleteRequest, opts ...grpc.CallOption) (*TSDBSeriesDeleteResponse, error) {
-	out := new(TSDBSeriesDeleteResponse)
-	err := grpc.Invoke(ctx, "/prometheus.TSDB/DeleteSeries", in, out, c.cc, opts...)
+func (c *adminClient) DeleteSeries(ctx context.Context, in *SeriesDeleteRequest, opts ...grpc.CallOption) (*SeriesDeleteResponse, error) {
+	out := new(SeriesDeleteResponse)
+	err := grpc.Invoke(ctx, "/prometheus.Admin/DeleteSeries", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// Server API for TSDB service
+// Server API for Admin service
 
-type TSDBServer interface {
+type AdminServer interface {
 	// Reload triggers a reload of block data.
-	Reload(context.Context, *TSDBReloadRequest) (*TSDBReloadResponse, error)
-	// Snapshot creates a snapshot of all current data into 'snapshots/<datetime>' under
+	TSDBReload(context.Context, *TSDBReloadRequest) (*TSDBReloadResponse, error)
+	// Snapshot creates a snapshot of all current data into 'snapshots/<datetime>-<rand>' under
 	// the TSDB's date directory.
-	Snapshot(context.Context, *TSDBSnapshotRequest) (*TSDBSnapshotResponse, error)
+	TSDBSnapshot(context.Context, *TSDBSnapshotRequest) (*TSDBSnapshotResponse, error)
 	// DeleteSeries deletes data for a selection of series in a time range.
-	DeleteSeries(context.Context, *TSDBSeriesDeleteRequest) (*TSDBSeriesDeleteResponse, error)
+	DeleteSeries(context.Context, *SeriesDeleteRequest) (*SeriesDeleteResponse, error)
 }
 
-func RegisterTSDBServer(s *grpc.Server, srv TSDBServer) {
-	s.RegisterService(&_TSDB_serviceDesc, srv)
+func RegisterAdminServer(s *grpc.Server, srv AdminServer) {
+	s.RegisterService(&_Admin_serviceDesc, srv)
 }
 
-func _TSDB_Reload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Admin_TSDBReload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TSDBReloadRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TSDBServer).Reload(ctx, in)
+		return srv.(AdminServer).TSDBReload(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/prometheus.TSDB/Reload",
+		FullMethod: "/prometheus.Admin/TSDBReload",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TSDBServer).Reload(ctx, req.(*TSDBReloadRequest))
+		return srv.(AdminServer).TSDBReload(ctx, req.(*TSDBReloadRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TSDB_Snapshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Admin_TSDBSnapshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TSDBSnapshotRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TSDBServer).Snapshot(ctx, in)
+		return srv.(AdminServer).TSDBSnapshot(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/prometheus.TSDB/Snapshot",
+		FullMethod: "/prometheus.Admin/TSDBSnapshot",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TSDBServer).Snapshot(ctx, req.(*TSDBSnapshotRequest))
+		return srv.(AdminServer).TSDBSnapshot(ctx, req.(*TSDBSnapshotRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TSDB_DeleteSeries_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TSDBSeriesDeleteRequest)
+func _Admin_DeleteSeries_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SeriesDeleteRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TSDBServer).DeleteSeries(ctx, in)
+		return srv.(AdminServer).DeleteSeries(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/prometheus.TSDB/DeleteSeries",
+		FullMethod: "/prometheus.Admin/DeleteSeries",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TSDBServer).DeleteSeries(ctx, req.(*TSDBSeriesDeleteRequest))
+		return srv.(AdminServer).DeleteSeries(ctx, req.(*SeriesDeleteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _TSDB_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "prometheus.TSDB",
-	HandlerType: (*TSDBServer)(nil),
+var _Admin_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "prometheus.Admin",
+	HandlerType: (*AdminServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Reload",
-			Handler:    _TSDB_Reload_Handler,
+			MethodName: "TSDBReload",
+			Handler:    _Admin_TSDBReload_Handler,
 		},
 		{
-			MethodName: "Snapshot",
-			Handler:    _TSDB_Snapshot_Handler,
+			MethodName: "TSDBSnapshot",
+			Handler:    _Admin_TSDBSnapshot_Handler,
 		},
 		{
 			MethodName: "DeleteSeries",
-			Handler:    _TSDB_DeleteSeries_Handler,
+			Handler:    _Admin_DeleteSeries_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -761,6 +916,7 @@ type StatusClient interface {
 	Alertmanagers(ctx context.Context, in *AlertmanagersRequest, opts ...grpc.CallOption) (*AlertmanagersResponse, error)
 	Health(ctx context.Context, in *HealthRequest, opts ...grpc.CallOption) (*HealthResponse, error)
 	Readiness(ctx context.Context, in *ReadinessRequest, opts ...grpc.CallOption) (*ReadinessResponse, error)
+	Config(ctx context.Context, in *ConfigRequest, opts ...grpc.CallOption) (*ConfigResponse, error)
 }
 
 type statusClient struct {
@@ -807,6 +963,15 @@ func (c *statusClient) Readiness(ctx context.Context, in *ReadinessRequest, opts
 	return out, nil
 }
 
+func (c *statusClient) Config(ctx context.Context, in *ConfigRequest, opts ...grpc.CallOption) (*ConfigResponse, error) {
+	out := new(ConfigResponse)
+	err := grpc.Invoke(ctx, "/prometheus.Status/Config", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for Status service
 
 type StatusServer interface {
@@ -814,6 +979,7 @@ type StatusServer interface {
 	Alertmanagers(context.Context, *AlertmanagersRequest) (*AlertmanagersResponse, error)
 	Health(context.Context, *HealthRequest) (*HealthResponse, error)
 	Readiness(context.Context, *ReadinessRequest) (*ReadinessResponse, error)
+	Config(context.Context, *ConfigRequest) (*ConfigResponse, error)
 }
 
 func RegisterStatusServer(s *grpc.Server, srv StatusServer) {
@@ -892,6 +1058,24 @@ func _Status_Readiness_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Status_Config_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfigRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StatusServer).Config(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/prometheus.Status/Config",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StatusServer).Config(ctx, req.(*ConfigRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Status_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "prometheus.Status",
 	HandlerType: (*StatusServer)(nil),
@@ -912,12 +1096,16 @@ var _Status_serviceDesc = grpc.ServiceDesc{
 			MethodName: "Readiness",
 			Handler:    _Status_Readiness_Handler,
 		},
+		{
+			MethodName: "Config",
+			Handler:    _Status_Config_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "rpc.proto",
 }
 
-func (m *QueryRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryInstantRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -927,7 +1115,7 @@ func (m *QueryRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryInstantRequest) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -944,6 +1132,56 @@ func (m *QueryRequest) MarshalTo(dAtA []byte) (int, error) {
 	}
 	if len(m.Expr) > 0 {
 		dAtA[i] = 0x12
+		i++
+		i = encodeVarintRpc(dAtA, i, uint64(len(m.Expr)))
+		i += copy(dAtA[i:], m.Expr)
+	}
+	return i, nil
+}
+
+func (m *QueryRangeRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryRangeRequest) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Range != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintRpc(dAtA, i, uint64(m.Range.Size()))
+		n2, err := m.Range.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n2
+	}
+	dAtA[i] = 0x12
+	i++
+	i = encodeVarintRpc(dAtA, i, uint64(github_com_gogo_protobuf_types.SizeOfStdDuration(m.Step)))
+	n3, err := github_com_gogo_protobuf_types.StdDurationMarshalTo(m.Step, dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n3
+	dAtA[i] = 0x1a
+	i++
+	i = encodeVarintRpc(dAtA, i, uint64(github_com_gogo_protobuf_types.SizeOfStdDuration(m.Timeout)))
+	n4, err := github_com_gogo_protobuf_types.StdDurationMarshalTo(m.Timeout, dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n4
+	if len(m.Expr) > 0 {
+		dAtA[i] = 0x22
 		i++
 		i = encodeVarintRpc(dAtA, i, uint64(len(m.Expr)))
 		i += copy(dAtA[i:], m.Expr)
@@ -996,16 +1234,14 @@ func (m *RawQueryRequest) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Range != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintRpc(dAtA, i, uint64(m.Range.Size()))
-		n2, err := m.Range.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n2
+	dAtA[i] = 0xa
+	i++
+	i = encodeVarintRpc(dAtA, i, uint64(m.Range.Size()))
+	n5, err := m.Range.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
 	}
+	i += n5
 	if len(m.Matchers) > 0 {
 		for _, msg := range m.Matchers {
 			dAtA[i] = 0x12
@@ -1021,7 +1257,7 @@ func (m *RawQueryRequest) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *LabelInfoRequest) Marshal() (dAtA []byte, err error) {
+func (m *LabelRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -1031,7 +1267,7 @@ func (m *LabelInfoRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *LabelInfoRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *LabelRequest) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -1045,7 +1281,7 @@ func (m *LabelInfoRequest) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *LabelInfoResponse) Marshal() (dAtA []byte, err error) {
+func (m *LabelResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -1055,7 +1291,7 @@ func (m *LabelInfoResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *LabelInfoResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *LabelResponse) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -1097,24 +1333,67 @@ func (m *SeriesRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintRpc(dAtA, i, uint64(m.Range.Size()))
-		n3, err := m.Range.MarshalTo(dAtA[i:])
+		n6, err := m.Range.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n3
+		i += n6
 	}
-	if len(m.Matchers) > 0 {
-		for _, msg := range m.Matchers {
-			dAtA[i] = 0x12
-			i++
-			i = encodeVarintRpc(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
+	if m.SelectorOrQuery != nil {
+		nn7, err := m.SelectorOrQuery.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
+		i += nn7
 	}
+	return i, nil
+}
+
+func (m *SeriesRequest_Selector) MarshalTo(dAtA []byte) (int, error) {
+	i := 0
+	if m.Selector != nil {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintRpc(dAtA, i, uint64(m.Selector.Size()))
+		n8, err := m.Selector.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n8
+	}
+	return i, nil
+}
+func (m *SeriesRequest_Query) MarshalTo(dAtA []byte) (int, error) {
+	i := 0
+	dAtA[i] = 0x1a
+	i++
+	i = encodeVarintRpc(dAtA, i, uint64(len(m.Query)))
+	i += copy(dAtA[i:], m.Query)
+	return i, nil
+}
+func (m *SeriesInfo) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *SeriesInfo) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	dAtA[i] = 0xa
+	i++
+	i = encodeVarintRpc(dAtA, i, uint64(m.Labels.Size()))
+	n9, err := m.Labels.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n9
 	return i, nil
 }
 
@@ -1148,7 +1427,7 @@ func (m *SeriesResponse) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *WriteRequest) Marshal() (dAtA []byte, err error) {
+func (m *RemoteWriteRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -1158,7 +1437,7 @@ func (m *WriteRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *WriteRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *RemoteWriteRequest) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -1178,7 +1457,7 @@ func (m *WriteRequest) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *WriteResponse) Marshal() (dAtA []byte, err error) {
+func (m *RemoteWriteResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -1188,7 +1467,7 @@ func (m *WriteResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *WriteResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *RemoteWriteResponse) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -1225,64 +1504,6 @@ func (m *TSDBReloadResponse) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *TSDBReloadResponse) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	return i, nil
-}
-
-func (m *TSDBSeriesDeleteRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *TSDBSeriesDeleteRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Range != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintRpc(dAtA, i, uint64(m.Range.Size()))
-		n4, err := m.Range.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n4
-	}
-	if len(m.Matchers) > 0 {
-		for _, msg := range m.Matchers {
-			dAtA[i] = 0x12
-			i++
-			i = encodeVarintRpc(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	return i, nil
-}
-
-func (m *TSDBSeriesDeleteResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *TSDBSeriesDeleteResponse) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -1332,6 +1553,86 @@ func (m *TSDBSnapshotResponse) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
+func (m *SeriesDeleteRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *SeriesDeleteRequest) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Range != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintRpc(dAtA, i, uint64(m.Range.Size()))
+		n10, err := m.Range.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n10
+	}
+	if m.SelectorOrQuery != nil {
+		nn11, err := m.SelectorOrQuery.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += nn11
+	}
+	return i, nil
+}
+
+func (m *SeriesDeleteRequest_Selector) MarshalTo(dAtA []byte) (int, error) {
+	i := 0
+	if m.Selector != nil {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintRpc(dAtA, i, uint64(m.Selector.Size()))
+		n12, err := m.Selector.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n12
+	}
+	return i, nil
+}
+func (m *SeriesDeleteRequest_Query) MarshalTo(dAtA []byte) (int, error) {
+	i := 0
+	dAtA[i] = 0x1a
+	i++
+	i = encodeVarintRpc(dAtA, i, uint64(len(m.Query)))
+	i += copy(dAtA[i:], m.Query)
+	return i, nil
+}
+func (m *SeriesDeleteResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *SeriesDeleteResponse) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.NumDeleted != 0 {
+		dAtA[i] = 0x8
+		i++
+		i = encodeVarintRpc(dAtA, i, uint64(m.NumDeleted))
+	}
+	return i, nil
+}
+
 func (m *TargetsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1373,11 +1674,11 @@ func (m *TargetStatus) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0x12
 	i++
 	i = encodeVarintRpc(dAtA, i, uint64(github_com_gogo_protobuf_types.SizeOfStdTime(m.LastScrape)))
-	n5, err := github_com_gogo_protobuf_types.StdTimeMarshalTo(m.LastScrape, dAtA[i:])
+	n13, err := github_com_gogo_protobuf_types.StdTimeMarshalTo(m.LastScrape, dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n5
+	i += n13
 	if len(m.LastError) > 0 {
 		dAtA[i] = 0x1a
 		i++
@@ -1408,40 +1709,30 @@ func (m *Target) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintRpc(dAtA, i, uint64(len(m.ScrapeUrl)))
 		i += copy(dAtA[i:], m.ScrapeUrl)
 	}
-	if len(m.Labels) > 0 {
-		for _, msg := range m.Labels {
-			dAtA[i] = 0x12
-			i++
-			i = encodeVarintRpc(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
+	dAtA[i] = 0x12
+	i++
+	i = encodeVarintRpc(dAtA, i, uint64(m.Labels.Size()))
+	n14, err := m.Labels.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
 	}
-	if len(m.DiscoveredLabels) > 0 {
-		for _, msg := range m.DiscoveredLabels {
-			dAtA[i] = 0x1a
-			i++
-			i = encodeVarintRpc(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
+	i += n14
+	dAtA[i] = 0x1a
+	i++
+	i = encodeVarintRpc(dAtA, i, uint64(m.DiscoveredLabels.Size()))
+	n15, err := m.DiscoveredLabels.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
 	}
-	if m.Status != nil {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintRpc(dAtA, i, uint64(m.Status.Size()))
-		n6, err := m.Status.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n6
+	i += n15
+	dAtA[i] = 0x22
+	i++
+	i = encodeVarintRpc(dAtA, i, uint64(m.Status.Size()))
+	n16, err := m.Status.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
 	}
+	i += n16
 	return i, nil
 }
 
@@ -1493,6 +1784,30 @@ func (m *AlertmanagersRequest) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
+func (m *Alertmanager) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Alertmanager) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if len(m.Url) > 0 {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintRpc(dAtA, i, uint64(len(m.Url)))
+		i += copy(dAtA[i:], m.Url)
+	}
+	return i, nil
+}
+
 func (m *AlertmanagersResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1508,6 +1823,18 @@ func (m *AlertmanagersResponse) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.Alertmanagers) > 0 {
+		for _, msg := range m.Alertmanagers {
+			dAtA[i] = 0xa
+			i++
+			i = encodeVarintRpc(dAtA, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
 	return i, nil
 }
 
@@ -1583,6 +1910,42 @@ func (m *ReadinessResponse) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
+func (m *ConfigRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ConfigRequest) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	return i, nil
+}
+
+func (m *ConfigResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ConfigResponse) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	return i, nil
+}
+
 func encodeFixed64Rpc(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	dAtA[offset+1] = uint8(v >> 8)
@@ -1610,13 +1973,31 @@ func encodeVarintRpc(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return offset + 1
 }
-func (m *QueryRequest) Size() (n int) {
+func (m *QueryInstantRequest) Size() (n int) {
 	var l int
 	_ = l
 	if m.Range != nil {
 		l = m.Range.Size()
 		n += 1 + l + sovRpc(uint64(l))
 	}
+	l = len(m.Expr)
+	if l > 0 {
+		n += 1 + l + sovRpc(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryRangeRequest) Size() (n int) {
+	var l int
+	_ = l
+	if m.Range != nil {
+		l = m.Range.Size()
+		n += 1 + l + sovRpc(uint64(l))
+	}
+	l = github_com_gogo_protobuf_types.SizeOfStdDuration(m.Step)
+	n += 1 + l + sovRpc(uint64(l))
+	l = github_com_gogo_protobuf_types.SizeOfStdDuration(m.Timeout)
+	n += 1 + l + sovRpc(uint64(l))
 	l = len(m.Expr)
 	if l > 0 {
 		n += 1 + l + sovRpc(uint64(l))
@@ -1639,10 +2020,8 @@ func (m *QueryResponse) Size() (n int) {
 func (m *RawQueryRequest) Size() (n int) {
 	var l int
 	_ = l
-	if m.Range != nil {
-		l = m.Range.Size()
-		n += 1 + l + sovRpc(uint64(l))
-	}
+	l = m.Range.Size()
+	n += 1 + l + sovRpc(uint64(l))
 	if len(m.Matchers) > 0 {
 		for _, e := range m.Matchers {
 			l = e.Size()
@@ -1652,7 +2031,7 @@ func (m *RawQueryRequest) Size() (n int) {
 	return n
 }
 
-func (m *LabelInfoRequest) Size() (n int) {
+func (m *LabelRequest) Size() (n int) {
 	var l int
 	_ = l
 	l = len(m.Name)
@@ -1662,7 +2041,7 @@ func (m *LabelInfoRequest) Size() (n int) {
 	return n
 }
 
-func (m *LabelInfoResponse) Size() (n int) {
+func (m *LabelResponse) Size() (n int) {
 	var l int
 	_ = l
 	if len(m.Values) > 0 {
@@ -1681,12 +2060,33 @@ func (m *SeriesRequest) Size() (n int) {
 		l = m.Range.Size()
 		n += 1 + l + sovRpc(uint64(l))
 	}
-	if len(m.Matchers) > 0 {
-		for _, e := range m.Matchers {
-			l = e.Size()
-			n += 1 + l + sovRpc(uint64(l))
-		}
+	if m.SelectorOrQuery != nil {
+		n += m.SelectorOrQuery.Size()
 	}
+	return n
+}
+
+func (m *SeriesRequest_Selector) Size() (n int) {
+	var l int
+	_ = l
+	if m.Selector != nil {
+		l = m.Selector.Size()
+		n += 1 + l + sovRpc(uint64(l))
+	}
+	return n
+}
+func (m *SeriesRequest_Query) Size() (n int) {
+	var l int
+	_ = l
+	l = len(m.Query)
+	n += 1 + l + sovRpc(uint64(l))
+	return n
+}
+func (m *SeriesInfo) Size() (n int) {
+	var l int
+	_ = l
+	l = m.Labels.Size()
+	n += 1 + l + sovRpc(uint64(l))
 	return n
 }
 
@@ -1702,7 +2102,7 @@ func (m *SeriesResponse) Size() (n int) {
 	return n
 }
 
-func (m *WriteRequest) Size() (n int) {
+func (m *RemoteWriteRequest) Size() (n int) {
 	var l int
 	_ = l
 	if len(m.Series) > 0 {
@@ -1714,7 +2114,7 @@ func (m *WriteRequest) Size() (n int) {
 	return n
 }
 
-func (m *WriteResponse) Size() (n int) {
+func (m *RemoteWriteResponse) Size() (n int) {
 	var l int
 	_ = l
 	return n
@@ -1732,28 +2132,6 @@ func (m *TSDBReloadResponse) Size() (n int) {
 	return n
 }
 
-func (m *TSDBSeriesDeleteRequest) Size() (n int) {
-	var l int
-	_ = l
-	if m.Range != nil {
-		l = m.Range.Size()
-		n += 1 + l + sovRpc(uint64(l))
-	}
-	if len(m.Matchers) > 0 {
-		for _, e := range m.Matchers {
-			l = e.Size()
-			n += 1 + l + sovRpc(uint64(l))
-		}
-	}
-	return n
-}
-
-func (m *TSDBSeriesDeleteResponse) Size() (n int) {
-	var l int
-	_ = l
-	return n
-}
-
 func (m *TSDBSnapshotRequest) Size() (n int) {
 	var l int
 	_ = l
@@ -1766,6 +2144,44 @@ func (m *TSDBSnapshotResponse) Size() (n int) {
 	l = len(m.Name)
 	if l > 0 {
 		n += 1 + l + sovRpc(uint64(l))
+	}
+	return n
+}
+
+func (m *SeriesDeleteRequest) Size() (n int) {
+	var l int
+	_ = l
+	if m.Range != nil {
+		l = m.Range.Size()
+		n += 1 + l + sovRpc(uint64(l))
+	}
+	if m.SelectorOrQuery != nil {
+		n += m.SelectorOrQuery.Size()
+	}
+	return n
+}
+
+func (m *SeriesDeleteRequest_Selector) Size() (n int) {
+	var l int
+	_ = l
+	if m.Selector != nil {
+		l = m.Selector.Size()
+		n += 1 + l + sovRpc(uint64(l))
+	}
+	return n
+}
+func (m *SeriesDeleteRequest_Query) Size() (n int) {
+	var l int
+	_ = l
+	l = len(m.Query)
+	n += 1 + l + sovRpc(uint64(l))
+	return n
+}
+func (m *SeriesDeleteResponse) Size() (n int) {
+	var l int
+	_ = l
+	if m.NumDeleted != 0 {
+		n += 1 + sovRpc(uint64(m.NumDeleted))
 	}
 	return n
 }
@@ -1798,22 +2214,12 @@ func (m *Target) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovRpc(uint64(l))
 	}
-	if len(m.Labels) > 0 {
-		for _, e := range m.Labels {
-			l = e.Size()
-			n += 1 + l + sovRpc(uint64(l))
-		}
-	}
-	if len(m.DiscoveredLabels) > 0 {
-		for _, e := range m.DiscoveredLabels {
-			l = e.Size()
-			n += 1 + l + sovRpc(uint64(l))
-		}
-	}
-	if m.Status != nil {
-		l = m.Status.Size()
-		n += 1 + l + sovRpc(uint64(l))
-	}
+	l = m.Labels.Size()
+	n += 1 + l + sovRpc(uint64(l))
+	l = m.DiscoveredLabels.Size()
+	n += 1 + l + sovRpc(uint64(l))
+	l = m.Status.Size()
+	n += 1 + l + sovRpc(uint64(l))
 	return n
 }
 
@@ -1835,9 +2241,25 @@ func (m *AlertmanagersRequest) Size() (n int) {
 	return n
 }
 
+func (m *Alertmanager) Size() (n int) {
+	var l int
+	_ = l
+	l = len(m.Url)
+	if l > 0 {
+		n += 1 + l + sovRpc(uint64(l))
+	}
+	return n
+}
+
 func (m *AlertmanagersResponse) Size() (n int) {
 	var l int
 	_ = l
+	if len(m.Alertmanagers) > 0 {
+		for _, e := range m.Alertmanagers {
+			l = e.Size()
+			n += 1 + l + sovRpc(uint64(l))
+		}
+	}
 	return n
 }
 
@@ -1865,6 +2287,18 @@ func (m *ReadinessResponse) Size() (n int) {
 	return n
 }
 
+func (m *ConfigRequest) Size() (n int) {
+	var l int
+	_ = l
+	return n
+}
+
+func (m *ConfigResponse) Size() (n int) {
+	var l int
+	_ = l
+	return n
+}
+
 func sovRpc(x uint64) (n int) {
 	for {
 		n++
@@ -1878,7 +2312,7 @@ func sovRpc(x uint64) (n int) {
 func sozRpc(x uint64) (n int) {
 	return sovRpc(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *QueryRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryInstantRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1901,10 +2335,10 @@ func (m *QueryRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryInstantRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryInstantRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1941,6 +2375,178 @@ func (m *QueryRequest) Unmarshal(dAtA []byte) error {
 			}
 			iNdEx = postIndex
 		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Expr", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRpc
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthRpc
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Expr = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipRpc(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthRpc
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryRangeRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowRpc
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryRangeRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryRangeRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Range", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRpc
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthRpc
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Range == nil {
+				m.Range = &TimeRange{}
+			}
+			if err := m.Range.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Step", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRpc
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthRpc
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := github_com_gogo_protobuf_types.StdDurationUnmarshal(&m.Step, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Timeout", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRpc
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthRpc
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := github_com_gogo_protobuf_types.StdDurationUnmarshal(&m.Timeout, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Expr", wireType)
 			}
@@ -2126,9 +2732,6 @@ func (m *RawQueryRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Range == nil {
-				m.Range = &TimeRange{}
-			}
 			if err := m.Range.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -2159,7 +2762,7 @@ func (m *RawQueryRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Matchers = append(m.Matchers, &LabelMatcher{})
+			m.Matchers = append(m.Matchers, LabelMatcher{})
 			if err := m.Matchers[len(m.Matchers)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -2185,7 +2788,7 @@ func (m *RawQueryRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *LabelInfoRequest) Unmarshal(dAtA []byte) error {
+func (m *LabelRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2208,10 +2811,10 @@ func (m *LabelInfoRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: LabelInfoRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: LabelRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: LabelInfoRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: LabelRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -2264,7 +2867,7 @@ func (m *LabelInfoRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *LabelInfoResponse) Unmarshal(dAtA []byte) error {
+func (m *LabelResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2287,10 +2890,10 @@ func (m *LabelInfoResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: LabelInfoResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: LabelResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: LabelInfoResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: LabelResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -2407,7 +3010,7 @@ func (m *SeriesRequest) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Matchers", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Selector", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -2431,8 +3034,118 @@ func (m *SeriesRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Matchers = append(m.Matchers, &LabelMatcher{})
-			if err := m.Matchers[len(m.Matchers)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			v := &Selector{}
+			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			m.SelectorOrQuery = &SeriesRequest_Selector{v}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Query", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRpc
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthRpc
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SelectorOrQuery = &SeriesRequest_Query{string(dAtA[iNdEx:postIndex])}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipRpc(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthRpc
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *SeriesInfo) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowRpc
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SeriesInfo: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SeriesInfo: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Labels", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRpc
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthRpc
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Labels.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -2512,7 +3225,7 @@ func (m *SeriesResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Series = append(m.Series, &Labels{})
+			m.Series = append(m.Series, &SeriesInfo{})
 			if err := m.Series[len(m.Series)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -2538,7 +3251,7 @@ func (m *SeriesResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *WriteRequest) Unmarshal(dAtA []byte) error {
+func (m *RemoteWriteRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2561,10 +3274,10 @@ func (m *WriteRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: WriteRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: RemoteWriteRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: WriteRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: RemoteWriteRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -2619,7 +3332,7 @@ func (m *WriteRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *WriteResponse) Unmarshal(dAtA []byte) error {
+func (m *RemoteWriteResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2642,10 +3355,10 @@ func (m *WriteResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: WriteResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: RemoteWriteResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: WriteResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: RemoteWriteResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
@@ -2746,170 +3459,6 @@ func (m *TSDBReloadResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: TSDBReloadResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipRpc(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthRpc
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *TSDBSeriesDeleteRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowRpc
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: TSDBSeriesDeleteRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: TSDBSeriesDeleteRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Range", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowRpc
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthRpc
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Range == nil {
-				m.Range = &TimeRange{}
-			}
-			if err := m.Range.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Matchers", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowRpc
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthRpc
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Matchers = append(m.Matchers, &LabelMatcher{})
-			if err := m.Matchers[len(m.Matchers)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipRpc(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthRpc
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *TSDBSeriesDeleteResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowRpc
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: TSDBSeriesDeleteResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: TSDBSeriesDeleteResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
@@ -3041,6 +3590,219 @@ func (m *TSDBSnapshotResponse) Unmarshal(dAtA []byte) error {
 			}
 			m.Name = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipRpc(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthRpc
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *SeriesDeleteRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowRpc
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SeriesDeleteRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SeriesDeleteRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Range", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRpc
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthRpc
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Range == nil {
+				m.Range = &TimeRange{}
+			}
+			if err := m.Range.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Selector", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRpc
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthRpc
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			v := &Selector{}
+			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			m.SelectorOrQuery = &SeriesDeleteRequest_Selector{v}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Query", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRpc
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthRpc
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SelectorOrQuery = &SeriesDeleteRequest_Query{string(dAtA[iNdEx:postIndex])}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipRpc(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthRpc
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *SeriesDeleteResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowRpc
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SeriesDeleteResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SeriesDeleteResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NumDeleted", wireType)
+			}
+			m.NumDeleted = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRpc
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.NumDeleted |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipRpc(dAtA[iNdEx:])
@@ -3324,8 +4086,7 @@ func (m *Target) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Labels = append(m.Labels, &Label{})
-			if err := m.Labels[len(m.Labels)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Labels.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -3355,8 +4116,7 @@ func (m *Target) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.DiscoveredLabels = append(m.DiscoveredLabels, &Label{})
-			if err := m.DiscoveredLabels[len(m.DiscoveredLabels)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.DiscoveredLabels.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -3385,9 +4145,6 @@ func (m *Target) Unmarshal(dAtA []byte) error {
 			postIndex := iNdEx + msglen
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
-			}
-			if m.Status == nil {
-				m.Status = &TargetStatus{}
 			}
 			if err := m.Status.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -3545,6 +4302,85 @@ func (m *AlertmanagersRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *Alertmanager) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowRpc
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Alertmanager: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Alertmanager: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Url", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRpc
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthRpc
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Url = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipRpc(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthRpc
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *AlertmanagersResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -3574,6 +4410,37 @@ func (m *AlertmanagersResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: AlertmanagersResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Alertmanagers", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRpc
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthRpc
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Alertmanagers = append(m.Alertmanagers, &Alertmanager{})
+			if err := m.Alertmanagers[len(m.Alertmanagers)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipRpc(dAtA[iNdEx:])
@@ -3795,6 +4662,106 @@ func (m *ReadinessResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *ConfigRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowRpc
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ConfigRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ConfigRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipRpc(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthRpc
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ConfigResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowRpc
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ConfigResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ConfigResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipRpc(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthRpc
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func skipRpc(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
@@ -3903,68 +4870,82 @@ var (
 func init() { proto.RegisterFile("rpc.proto", fileDescriptorRpc) }
 
 var fileDescriptorRpc = []byte{
-	// 998 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x55, 0xdd, 0x6e, 0x1b, 0x45,
-	0x14, 0xce, 0x3a, 0xc9, 0x26, 0x3e, 0x8e, 0x13, 0x67, 0xf2, 0xb7, 0xdd, 0x26, 0x76, 0xba, 0x20,
-	0x08, 0x29, 0xb2, 0xc1, 0x20, 0x21, 0xa1, 0xd2, 0xa8, 0x56, 0x23, 0xa5, 0x6a, 0x49, 0xc5, 0xc4,
-	0x51, 0x05, 0x37, 0xd6, 0x38, 0x9e, 0xd8, 0x96, 0xd6, 0xbb, 0xcb, 0xcc, 0x38, 0xa5, 0x12, 0x57,
-	0x7d, 0x02, 0x24, 0x9e, 0x83, 0xb7, 0xe0, 0x22, 0x97, 0x48, 0xbd, 0x87, 0x12, 0x78, 0x10, 0xb4,
-	0x33, 0x67, 0x6d, 0xaf, 0x7f, 0x22, 0xd1, 0x8b, 0xde, 0xed, 0x9c, 0xf3, 0x9d, 0xff, 0x73, 0xbe,
-	0x85, 0xac, 0x88, 0x2e, 0xca, 0x91, 0x08, 0x55, 0x48, 0x20, 0x12, 0x61, 0x8f, 0xab, 0x0e, 0xef,
-	0x4b, 0x37, 0xa7, 0x5e, 0x45, 0x5c, 0x1a, 0x85, 0x5b, 0x6a, 0x87, 0x61, 0xdb, 0xe7, 0x15, 0xfd,
-	0x6a, 0xf6, 0x2f, 0x2b, 0xaa, 0xdb, 0xe3, 0x52, 0xb1, 0x5e, 0x84, 0x80, 0x5d, 0x04, 0xb0, 0xa8,
-	0x5b, 0x61, 0x41, 0x10, 0x2a, 0xa6, 0xba, 0x61, 0x90, 0x98, 0x6f, 0xb6, 0xc3, 0x76, 0xa8, 0x3f,
-	0x2b, 0xf1, 0x97, 0x91, 0x7a, 0xcf, 0x61, 0xe5, 0xbb, 0x3e, 0x17, 0xaf, 0x28, 0xff, 0xb1, 0xcf,
-	0xa5, 0x22, 0xf7, 0x61, 0x51, 0xb0, 0xa0, 0xcd, 0x1d, 0x6b, 0xdf, 0x3a, 0xc8, 0x55, 0xb7, 0xca,
-	0xc3, 0x6c, 0xca, 0xf5, 0x6e, 0x8f, 0xd3, 0x58, 0x49, 0x0d, 0x86, 0x10, 0x58, 0xe0, 0x3f, 0x45,
-	0xc2, 0xc9, 0xec, 0x5b, 0x07, 0x59, 0xaa, 0xbf, 0xbd, 0x23, 0xc8, 0xa3, 0x43, 0x19, 0x85, 0x81,
-	0xe4, 0xa4, 0x0c, 0xb6, 0xe4, 0xa2, 0xcb, 0xa5, 0x63, 0xed, 0xcf, 0x1f, 0xe4, 0xaa, 0xdb, 0xe3,
-	0x2e, 0xcf, 0xb4, 0x96, 0x22, 0xca, 0x53, 0xb0, 0x46, 0xd9, 0xcb, 0x77, 0x4f, 0xea, 0x4b, 0x58,
-	0xee, 0x31, 0x75, 0xd1, 0xe1, 0x42, 0x3a, 0x19, 0x1d, 0xd1, 0x19, 0xc5, 0x3f, 0x63, 0x4d, 0xee,
-	0x7f, 0x6b, 0x00, 0x74, 0x80, 0xf4, 0x3e, 0x82, 0x82, 0xd6, 0x3c, 0x09, 0x2e, 0xc3, 0x24, 0x2c,
-	0x81, 0x85, 0x80, 0xf5, 0x4c, 0xd4, 0x2c, 0xd5, 0xdf, 0xde, 0x7d, 0x58, 0x1f, 0xc1, 0x61, 0x89,
-	0xdb, 0x60, 0x5f, 0x31, 0xbf, 0x8f, 0x25, 0x66, 0x29, 0xbe, 0x3c, 0x01, 0x79, 0x2c, 0xee, 0xfd,
-	0x15, 0xf2, 0x00, 0x56, 0x93, 0x98, 0x98, 0xdd, 0xe1, 0xd8, 0x00, 0xc8, 0x84, 0x97, 0x61, 0xf3,
-	0x1f, 0xc2, 0xca, 0x0b, 0xd1, 0x55, 0x3c, 0x49, 0xf8, 0xff, 0x0e, 0x6f, 0x0d, 0xf2, 0x68, 0x6f,
-	0x82, 0x7b, 0x1b, 0xb0, 0x5e, 0x3f, 0x7b, 0x5c, 0xa3, 0xdc, 0x0f, 0x59, 0x0b, 0xbd, 0x7a, 0x9b,
-	0x40, 0x46, 0x85, 0x08, 0xfd, 0x19, 0x76, 0x62, 0xa9, 0xf1, 0xf8, 0x98, 0xfb, 0x7c, 0x98, 0xc6,
-	0x7b, 0xe8, 0x9b, 0x0b, 0xce, 0x64, 0x74, 0xcc, 0x6c, 0x0b, 0x36, 0xb4, 0x2e, 0x60, 0x91, 0xec,
-	0x84, 0x2a, 0x29, 0xe3, 0x10, 0x36, 0xd3, 0x62, 0x6c, 0xf8, 0xb4, 0xbd, 0x29, 0xc0, 0x6a, 0x9d,
-	0x89, 0x36, 0x57, 0xc9, 0x2e, 0x78, 0x6f, 0x2d, 0x58, 0x31, 0xa2, 0x33, 0xc5, 0x54, 0x5f, 0x92,
-	0xaf, 0xc0, 0xee, 0x70, 0xe6, 0xab, 0x8e, 0x36, 0x5c, 0xad, 0x96, 0x52, 0x55, 0x8e, 0x20, 0xcb,
-	0x27, 0x1a, 0x46, 0x11, 0x4e, 0x8e, 0x21, 0xe7, 0x33, 0xa9, 0x1a, 0xf2, 0x42, 0xb0, 0x88, 0xeb,
-	0x6b, 0xcc, 0x55, 0xdd, 0xb2, 0x61, 0x83, 0x72, 0x42, 0x17, 0xba, 0x51, 0x9a, 0x2e, 0x6a, 0xcb,
-	0xd7, 0x7f, 0x96, 0xe6, 0x7e, 0xf9, 0xab, 0x64, 0x51, 0x88, 0x0d, 0xcf, 0xb4, 0x1d, 0xd9, 0x03,
-	0xfd, 0x6a, 0x70, 0x21, 0x42, 0xe1, 0xcc, 0xeb, 0xe4, 0xb3, 0xb1, 0xe4, 0x38, 0x16, 0x78, 0x9f,
-	0x83, 0x6d, 0xe2, 0x92, 0x1c, 0x2c, 0x9d, 0x9f, 0x3e, 0x3d, 0x7d, 0xfe, 0xe2, 0xb4, 0x30, 0x17,
-	0x3f, 0x4e, 0x8e, 0x1f, 0x3d, 0xab, 0x9f, 0x7c, 0x5f, 0xb0, 0x48, 0x1e, 0xb2, 0xe7, 0xa7, 0xc9,
-	0x33, 0xe3, 0xfd, 0x6e, 0x81, 0x6d, 0x12, 0x8f, 0x9d, 0x9b, 0xf4, 0x1a, 0x7d, 0xe1, 0x63, 0x67,
-	0xb2, 0x46, 0x72, 0x2e, 0x7c, 0xf2, 0x09, 0xd8, 0xbe, 0xde, 0x44, 0x9c, 0xd8, 0xfa, 0xc4, 0xc4,
-	0x28, 0x02, 0xc8, 0x43, 0x58, 0x6f, 0x75, 0xe5, 0x45, 0x78, 0xc5, 0x05, 0x6f, 0x35, 0xd0, 0x6a,
-	0x7e, 0x96, 0x55, 0x61, 0x88, 0x35, 0xab, 0x4e, 0x3e, 0x03, 0x5b, 0xea, 0x36, 0x3a, 0x0b, 0xba,
-	0x51, 0xce, 0xac, 0x36, 0x53, 0xc4, 0x79, 0x47, 0xb0, 0x36, 0x98, 0x1d, 0x8e, 0xf8, 0x53, 0x58,
-	0x52, 0x46, 0x34, 0xed, 0xa8, 0x0c, 0x9a, 0x26, 0x10, 0x6f, 0x1b, 0x36, 0x1f, 0xf9, 0x5c, 0xa8,
-	0x1e, 0x0b, 0x58, 0x9b, 0x8b, 0xc1, 0x0a, 0xec, 0xc0, 0xd6, 0x98, 0x1c, 0x17, 0x6e, 0x0d, 0xf2,
-	0x38, 0x63, 0x44, 0x16, 0x60, 0x35, 0x11, 0x20, 0x84, 0x40, 0x81, 0x72, 0xd6, 0xea, 0x06, 0x5c,
-	0x0e, 0xfc, 0x6d, 0xc0, 0xfa, 0x88, 0xcc, 0x00, 0xab, 0x6f, 0x32, 0xb0, 0xa8, 0xd9, 0x94, 0x7c,
-	0x03, 0x4b, 0x4f, 0x02, 0xa9, 0x58, 0xa0, 0x48, 0xaa, 0xe8, 0x51, 0xae, 0x75, 0x67, 0x6a, 0xc8,
-	0x03, 0x58, 0xd4, 0x77, 0x76, 0x8b, 0xf1, 0x9d, 0x29, 0x1a, 0xec, 0x58, 0x0d, 0x96, 0x29, 0x7b,
-	0x69, 0x1c, 0xdc, 0x1d, 0x85, 0x8d, 0x91, 0xfd, 0x6d, 0x3e, 0x4e, 0x20, 0x3b, 0x20, 0x5f, 0xb2,
-	0x3b, 0x31, 0xec, 0x11, 0xee, 0x76, 0xf7, 0x66, 0x68, 0xd1, 0xd3, 0x11, 0xd8, 0xe6, 0xd2, 0x49,
-	0x2a, 0x5c, 0x8a, 0xad, 0x5d, 0x77, 0x9a, 0x0a, 0xbb, 0xfa, 0x14, 0x72, 0x94, 0xf7, 0x42, 0xc5,
-	0x35, 0xdd, 0xc5, 0xbd, 0x31, 0x1f, 0xa9, 0xde, 0x8c, 0x52, 0x69, 0xba, 0xae, 0x14, 0x49, 0x56,
-	0xff, 0xc9, 0xc0, 0x42, 0xcc, 0x24, 0xe4, 0x12, 0x6c, 0x43, 0x8a, 0x24, 0x95, 0xff, 0x04, 0x83,
-	0xba, 0xc5, 0x59, 0x6a, 0xdc, 0x8e, 0xbd, 0xd7, 0x6f, 0xfe, 0xfd, 0x35, 0xb3, 0x43, 0xb6, 0x2a,
-	0x57, 0xd5, 0x0a, 0x6b, 0xf5, 0xba, 0x41, 0x45, 0xc9, 0x56, 0xb3, 0x22, 0x8c, 0xf7, 0x00, 0x96,
-	0x13, 0xd6, 0x22, 0xa5, 0x71, 0x57, 0x63, 0x34, 0xe7, 0xee, 0xcf, 0x06, 0x60, 0xb4, 0x92, 0x8e,
-	0x76, 0x87, 0xec, 0x8c, 0x45, 0x93, 0x49, 0x8c, 0xd7, 0x16, 0xac, 0x18, 0x4e, 0xc5, 0xae, 0x7f,
-	0x30, 0xe1, 0x73, 0x92, 0xf5, 0xdd, 0x0f, 0x6f, 0x07, 0x61, 0xf0, 0x8f, 0x75, 0xf0, 0x7b, 0xde,
-	0xee, 0x58, 0xf0, 0x96, 0x86, 0x35, 0xcc, 0x8f, 0xe9, 0x6b, 0xeb, 0xb0, 0xfa, 0x5b, 0x06, 0x6c,
-	0xa4, 0xda, 0x1a, 0x2c, 0xe1, 0x45, 0x13, 0x77, 0xf2, 0x70, 0x07, 0x0b, 0x70, 0x77, 0xaa, 0x0e,
-	0x57, 0xa8, 0x0e, 0xf9, 0xd4, 0xf1, 0x92, 0x54, 0x9f, 0xa6, 0xdd, 0xbb, 0x7b, 0xef, 0x16, 0xc4,
-	0x70, 0x31, 0x91, 0x65, 0x53, 0xfb, 0x92, 0x62, 0x83, 0xf4, 0x62, 0xa6, 0x79, 0x21, 0xbe, 0x91,
-	0x01, 0x07, 0xa4, 0x6f, 0x64, 0x9c, 0x2e, 0xd2, 0x37, 0x32, 0x41, 0x1c, 0x35, 0xe7, 0xfa, 0xef,
-	0xe2, 0xdc, 0xf5, 0x4d, 0xd1, 0xfa, 0xe3, 0xa6, 0x68, 0xbd, 0xbd, 0x29, 0x5a, 0x3f, 0xd8, 0x31,
-	0x3e, 0x6a, 0x36, 0x6d, 0xfd, 0x4f, 0xf9, 0xe2, 0xbf, 0x00, 0x00, 0x00, 0xff, 0xff, 0xf7, 0x52,
-	0x3d, 0xdf, 0xb6, 0x0a, 0x00, 0x00,
+	// 1227 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x56, 0x41, 0x6f, 0xe3, 0x54,
+	0x10, 0xae, 0xd3, 0x24, 0xdd, 0x4c, 0x9a, 0x36, 0x79, 0x49, 0xdb, 0xd4, 0x6c, 0xd3, 0xe0, 0x0b,
+	0xd5, 0x82, 0x62, 0x1a, 0xa4, 0x5d, 0x09, 0x89, 0x5d, 0x5a, 0x5a, 0xa9, 0x2b, 0x96, 0x22, 0x9c,
+	0x76, 0x0b, 0x3d, 0x10, 0xbd, 0x24, 0xaf, 0x69, 0xc0, 0xb1, 0xbd, 0xcf, 0x2f, 0x85, 0x15, 0x42,
+	0x42, 0xfc, 0x02, 0x24, 0x84, 0xc4, 0x85, 0x13, 0x7f, 0xa6, 0x07, 0x0e, 0x48, 0x70, 0xe0, 0x04,
+	0x4b, 0xc5, 0xcf, 0xe0, 0x80, 0xfc, 0xde, 0xd8, 0xb1, 0x93, 0x74, 0x29, 0x7b, 0xe2, 0xe6, 0x37,
+	0xf3, 0xcd, 0x7c, 0x33, 0xf3, 0x66, 0xe6, 0x19, 0x72, 0xdc, 0xeb, 0x36, 0x3c, 0xee, 0x0a, 0x97,
+	0x80, 0xc7, 0xdd, 0x21, 0x13, 0xe7, 0x6c, 0xe4, 0xeb, 0x79, 0xf1, 0xd4, 0x63, 0xbe, 0x52, 0xe8,
+	0xb5, 0xbe, 0xeb, 0xf6, 0x6d, 0x66, 0xca, 0x53, 0x67, 0x74, 0x66, 0xf6, 0x46, 0x9c, 0x8a, 0x81,
+	0xeb, 0xa0, 0x7e, 0x73, 0x52, 0x2f, 0x06, 0x43, 0xe6, 0x0b, 0x3a, 0xf4, 0x10, 0x70, 0x1b, 0x01,
+	0xd4, 0x1b, 0x98, 0xd4, 0x71, 0x5c, 0x21, 0xad, 0x43, 0xf7, 0x95, 0xbe, 0xdb, 0x77, 0xe5, 0xa7,
+	0x19, 0x7c, 0x29, 0xa9, 0xf1, 0x18, 0xca, 0x1f, 0x8c, 0x18, 0x7f, 0xfa, 0xd0, 0xf1, 0x05, 0x75,
+	0x84, 0xc5, 0x9e, 0x8c, 0x98, 0x2f, 0xc8, 0xab, 0x90, 0xe1, 0xd4, 0xe9, 0xb3, 0xaa, 0x56, 0xd7,
+	0xb6, 0xf2, 0xcd, 0x95, 0xc6, 0x38, 0xe8, 0xc6, 0xd1, 0x60, 0xc8, 0xac, 0x40, 0x69, 0x29, 0x0c,
+	0x21, 0x90, 0x66, 0x9f, 0x7b, 0xbc, 0x9a, 0xaa, 0x6b, 0x5b, 0x39, 0x4b, 0x7e, 0x1b, 0x3f, 0x69,
+	0x50, 0x92, 0x8e, 0x15, 0xf2, 0x45, 0xdc, 0xde, 0x83, 0xb4, 0x2f, 0x98, 0x27, 0xdd, 0xe6, 0x9b,
+	0xeb, 0x0d, 0x95, 0x5d, 0x23, 0x4c, 0xbf, 0xb1, 0x87, 0xe5, 0xd9, 0xbd, 0x75, 0xf9, 0xfb, 0xe6,
+	0xdc, 0xf7, 0x7f, 0x6c, 0x6a, 0x96, 0x34, 0x20, 0x6f, 0xc1, 0x42, 0x50, 0x1a, 0x77, 0x24, 0xaa,
+	0xf3, 0x37, 0xb7, 0x0d, 0x6d, 0xa2, 0x74, 0xd2, 0xb1, 0x74, 0x1e, 0x40, 0x41, 0x65, 0xc3, 0x7c,
+	0xcf, 0x75, 0x7c, 0x46, 0x1a, 0x90, 0xf5, 0x19, 0x1f, 0x30, 0xbf, 0xaa, 0xd5, 0xe7, 0xb7, 0xf2,
+	0xcd, 0xd5, 0xc9, 0x54, 0x5a, 0x52, 0x6b, 0x21, 0xca, 0xf8, 0x4a, 0x83, 0x65, 0x8b, 0x7e, 0x86,
+	0x4e, 0x54, 0x35, 0xb6, 0x6f, 0x52, 0x8d, 0xdd, 0x74, 0x10, 0x61, 0x58, 0x93, 0x37, 0xe1, 0xd6,
+	0x90, 0x8a, 0xee, 0x39, 0xe3, 0x7e, 0x35, 0x25, 0x89, 0xab, 0x71, 0xab, 0x47, 0xb4, 0xc3, 0xec,
+	0xf7, 0x14, 0x00, 0x0d, 0x23, 0xbc, 0x61, 0xc0, 0xa2, 0xd4, 0x87, 0xf4, 0x04, 0xd2, 0x0e, 0x1d,
+	0x2a, 0xf6, 0x9c, 0x25, 0xbf, 0x8d, 0x57, 0xa0, 0x80, 0x18, 0xcc, 0x73, 0x15, 0xb2, 0x17, 0xd4,
+	0x1e, 0x61, 0x9e, 0x39, 0x0b, 0x4f, 0xc6, 0x0f, 0x1a, 0x14, 0x30, 0xc5, 0x17, 0xb9, 0xdb, 0x26,
+	0xdc, 0xf2, 0x99, 0xcd, 0xba, 0xc2, 0xe5, 0x78, 0xbf, 0x95, 0x38, 0xbe, 0x85, 0xba, 0x83, 0x39,
+	0x2b, 0xc2, 0x91, 0x55, 0xc8, 0x3c, 0x09, 0xca, 0x27, 0x2f, 0x35, 0x77, 0x30, 0x67, 0xa9, 0xe3,
+	0x6e, 0x19, 0x4a, 0x21, 0xa6, 0xed, 0xf2, 0xb6, 0x14, 0x1a, 0xf7, 0x01, 0x54, 0x78, 0x0f, 0x9d,
+	0x33, 0x97, 0xbc, 0x0e, 0x59, 0x3b, 0x48, 0xcb, 0xc7, 0xe0, 0xc8, 0x54, 0xd1, 0x7c, 0x2c, 0x17,
+	0xe2, 0x8c, 0xb7, 0x61, 0x29, 0x4c, 0xef, 0x26, 0x37, 0x3e, 0xe6, 0x8a, 0x6e, 0x7c, 0x0f, 0x88,
+	0xc5, 0x86, 0xae, 0x60, 0x27, 0x7c, 0x20, 0xa2, 0x09, 0xf8, 0xaf, 0x7d, 0xb3, 0x02, 0xe5, 0x84,
+	0x17, 0x15, 0x8c, 0x51, 0x86, 0xd2, 0x51, 0x6b, 0x6f, 0xd7, 0x62, 0xb6, 0x4b, 0x7b, 0xe8, 0xdb,
+	0xa8, 0x00, 0x89, 0x0b, 0x11, 0xba, 0x02, 0xe5, 0x40, 0xda, 0x72, 0xa8, 0xe7, 0x9f, 0xbb, 0xe1,
+	0x84, 0x1b, 0x77, 0xa0, 0x92, 0x14, 0x63, 0x9a, 0xb3, 0xba, 0xe2, 0x47, 0x0d, 0xca, 0x2a, 0xae,
+	0x3d, 0x66, 0x33, 0xc1, 0xfe, 0x9f, 0x57, 0x7e, 0x17, 0x2a, 0xc9, 0x20, 0x31, 0xa3, 0x1a, 0xc0,
+	0xe1, 0x68, 0xa8, 0x84, 0x3d, 0x19, 0x6a, 0xda, 0x8a, 0x49, 0x8c, 0x22, 0x2c, 0x1d, 0x51, 0xde,
+	0x67, 0x22, 0x6c, 0x65, 0xe3, 0x99, 0x06, 0x8b, 0x4a, 0xd4, 0x12, 0x54, 0x8c, 0x7c, 0x72, 0x0f,
+	0xb2, 0xe7, 0x8c, 0xda, 0xe2, 0x5c, 0x9a, 0x2f, 0x35, 0x37, 0x13, 0x99, 0xc6, 0x90, 0x8d, 0x03,
+	0x09, 0xb3, 0x10, 0x4e, 0xf6, 0x21, 0x6f, 0x53, 0x5f, 0xb4, 0xfd, 0x2e, 0xa7, 0x1e, 0xc3, 0xbc,
+	0xf5, 0xa9, 0x75, 0x74, 0x14, 0x6e, 0x72, 0xb5, 0x8f, 0xbe, 0x09, 0xf6, 0x11, 0x04, 0x86, 0x2d,
+	0x69, 0x47, 0x36, 0x40, 0x9e, 0xda, 0x8c, 0x73, 0x97, 0xab, 0x62, 0x58, 0xb9, 0x40, 0xb2, 0x1f,
+	0x08, 0x8c, 0x6d, 0xc8, 0x2a, 0x5e, 0x92, 0x87, 0x85, 0xe3, 0xc3, 0x77, 0x0f, 0xdf, 0x3f, 0x39,
+	0x2c, 0xce, 0x05, 0x87, 0x83, 0xfd, 0x9d, 0x47, 0x47, 0x07, 0x1f, 0x15, 0x35, 0x52, 0x80, 0xdc,
+	0xf1, 0x61, 0x78, 0x4c, 0x19, 0xbf, 0x69, 0x90, 0x55, 0x81, 0x07, 0xce, 0x55, 0x78, 0xed, 0x11,
+	0xb7, 0xf1, 0xde, 0x73, 0x4a, 0x72, 0xcc, 0xed, 0xd8, 0xec, 0xa4, 0x6e, 0x36, 0x3b, 0x64, 0x1f,
+	0x4a, 0xbd, 0x81, 0xdf, 0x75, 0x2f, 0x18, 0x67, 0xbd, 0x36, 0x1a, 0xcf, 0xff, 0x8b, 0x71, 0x71,
+	0x6c, 0xa2, 0xe4, 0xe4, 0x2e, 0x64, 0x7d, 0x59, 0x54, 0xb9, 0x89, 0x27, 0x36, 0x5d, 0xbc, 0xe8,
+	0x21, 0xbd, 0x42, 0x1b, 0x0f, 0x60, 0x39, 0xba, 0x4f, 0x6c, 0x81, 0xd7, 0x60, 0x41, 0x28, 0x11,
+	0x8e, 0x1d, 0x99, 0xf6, 0x65, 0x85, 0x10, 0x63, 0x15, 0x2a, 0x3b, 0x36, 0xe3, 0x62, 0x48, 0x1d,
+	0xda, 0x67, 0x3c, 0x6a, 0x8b, 0x3a, 0x2c, 0xc6, 0xe5, 0xa4, 0x08, 0xf3, 0xe3, 0x8a, 0x05, 0x9f,
+	0xc6, 0x09, 0xac, 0x4c, 0x58, 0x62, 0x00, 0xf7, 0xa1, 0x40, 0xe3, 0x0a, 0x0c, 0x23, 0x91, 0x52,
+	0xdc, 0xd2, 0x4a, 0xc2, 0x8d, 0x65, 0x28, 0x60, 0x67, 0x61, 0x2c, 0x45, 0x58, 0x0a, 0x05, 0x38,
+	0xe7, 0x04, 0x8a, 0x16, 0xa3, 0xbd, 0x81, 0xc3, 0xfc, 0x28, 0xe2, 0x32, 0x94, 0x62, 0x32, 0x04,
+	0x2e, 0x43, 0xe1, 0x1d, 0xd7, 0x39, 0x1b, 0xf4, 0x63, 0xbe, 0x42, 0x81, 0x82, 0x34, 0xbf, 0x4b,
+	0x41, 0x46, 0x3e, 0x55, 0xe4, 0x43, 0x58, 0xc0, 0x5f, 0x03, 0x92, 0x68, 0xfa, 0x19, 0x3f, 0x0d,
+	0xfa, 0xfa, 0x14, 0x20, 0xe2, 0x2c, 0x7d, 0xfd, 0xcb, 0x5f, 0xdf, 0xa6, 0xf2, 0x24, 0x67, 0x5e,
+	0x34, 0x4d, 0x39, 0xae, 0xe4, 0x14, 0x32, 0x72, 0x3f, 0x90, 0x8d, 0x69, 0xb3, 0xd8, 0x3f, 0xc3,
+	0xf3, 0xbc, 0xae, 0x49, 0xaf, 0x25, 0xb2, 0x1c, 0x79, 0x6d, 0xab, 0x5d, 0xf3, 0x18, 0x32, 0xb2,
+	0x89, 0xc8, 0xf4, 0xeb, 0x38, 0xd3, 0x6d, 0xe2, 0xcd, 0x33, 0xaa, 0xd2, 0x2d, 0x21, 0xc5, 0xc0,
+	0xad, 0x6c, 0x5f, 0xf3, 0x8b, 0x60, 0x0f, 0x7e, 0xd9, 0xfc, 0x35, 0x05, 0x99, 0x9d, 0xde, 0x70,
+	0xe0, 0x90, 0x4f, 0x00, 0xc6, 0xbb, 0x36, 0x99, 0xc2, 0xd4, 0x62, 0xd6, 0x6b, 0xd7, 0xa9, 0x91,
+	0x70, 0x43, 0x12, 0xae, 0x91, 0x15, 0x93, 0x06, 0xce, 0xcd, 0x8b, 0x6d, 0x53, 0xf8, 0xbd, 0x8e,
+	0xc9, 0x95, 0x77, 0x0e, 0x8b, 0xf1, 0x55, 0x9d, 0xbc, 0x88, 0x19, 0xbb, 0x5d, 0xaf, 0x5f, 0x0f,
+	0x40, 0xc6, 0x4d, 0xc9, 0xb8, 0x4e, 0xd6, 0x26, 0x18, 0xfd, 0x90, 0xe3, 0x53, 0x58, 0x54, 0xfb,
+	0x51, 0xad, 0xd4, 0x24, 0xe7, 0x8c, 0xb7, 0x20, 0xc9, 0x39, 0x6b, 0x0f, 0x87, 0x65, 0xbd, 0x53,
+	0x1c, 0x73, 0xaa, 0x47, 0xae, 0xf9, 0xf7, 0x3c, 0x64, 0x71, 0xd3, 0x7e, 0x0c, 0x0b, 0x38, 0xbc,
+	0x44, 0x9f, 0x9e, 0xd1, 0xb0, 0xb1, 0xf5, 0x97, 0x66, 0xea, 0x90, 0x48, 0x97, 0x44, 0x15, 0x42,
+	0x82, 0xfb, 0x53, 0x4b, 0xc1, 0xc4, 0xd9, 0x26, 0x17, 0x50, 0x48, 0x4c, 0x28, 0xa9, 0x5f, 0x37,
+	0x82, 0x11, 0xd7, 0xcb, 0xcf, 0x41, 0x20, 0x63, 0x5d, 0x32, 0xea, 0xa4, 0x1a, 0x63, 0x4c, 0x0c,
+	0x30, 0x39, 0x8d, 0x56, 0x74, 0xa2, 0xf1, 0x12, 0x43, 0xad, 0xeb, 0xb3, 0x54, 0x48, 0xb1, 0x2e,
+	0x29, 0xca, 0xa4, 0x14, 0xa3, 0xc0, 0x47, 0xa6, 0x03, 0xb9, 0x68, 0xca, 0xc9, 0xed, 0xb8, 0x8f,
+	0xc9, 0x85, 0xa0, 0x6f, 0x5c, 0xa3, 0x9d, 0xd5, 0xf9, 0x48, 0xc2, 0x19, 0xed, 0x05, 0xd3, 0x9a,
+	0x55, 0x3b, 0x22, 0x19, 0x7f, 0x62, 0x91, 0x24, 0xe3, 0x4f, 0xae, 0x94, 0x99, 0xf1, 0x77, 0x25,
+	0x64, 0xb7, 0x7a, 0xf9, 0x67, 0x6d, 0xee, 0xf2, 0xaa, 0xa6, 0xfd, 0x7c, 0x55, 0xd3, 0x9e, 0x5d,
+	0xd5, 0xb4, 0xd3, 0x6c, 0xe0, 0xc7, 0xeb, 0x74, 0xb2, 0xf2, 0x85, 0x7c, 0xe3, 0x9f, 0x00, 0x00,
+	0x00, 0xff, 0xff, 0x4d, 0x55, 0xa0, 0xa7, 0x3f, 0x0d, 0x00, 0x00,
 }

@@ -15,6 +15,7 @@ syntax = "proto3";
 package prometheus;
 
 import "types.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 import "gogoproto/gogo.proto";
@@ -27,16 +28,48 @@ option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.goproto_getters_all) = false;
 
 service Query {
-  rpc Instant(QueryRequest) returns (QueryRequest);
-  rpc Range(QueryRequest) returns (QueryResponse);
-  rpc RawRange(RawQueryRequest) returns (QueryResponse);
-  rpc LabelInfo(LabelInfoRequest) returns (LabelInfoResponse);
-  rpc Series(SeriesRequest) returns (SeriesResponse);
+  rpc Instant(QueryInstantRequest) returns (QueryResponse)  {
+    option (google.api.http) = {
+      get: "/v2/query"
+    };
+  }
+
+  rpc Range(QueryRangeRequest) returns (QueryResponse) {
+    option (google.api.http) = {
+      get: "/v2/query_range"
+    };
+  }
+
+  rpc Label(LabelRequest) returns (LabelResponse) {
+    option (google.api.http) = {
+      get: "/v2/label/{name}"
+    };
+  }
+
+  // rpc Series(SeriesRequest) returns (SeriesResponse) {
+  //   option (google.api.http) = {
+  //     get: "/v2/series"
+  //   };
+  // }
 }
 
-message QueryRequest {
+message QueryInstantRequest {
+  // Time range for which to return data.
   TimeRange range = 1;
+  // PromQL formatted query expression.
   string expr     = 2;
+}
+
+
+message QueryRangeRequest {
+  // Time range for which to return data.
+  TimeRange range = 1;
+
+  google.protobuf.Duration step = 2 [(gogoproto.stdduration) = true, (gogoproto.nullable) = false];
+
+  google.protobuf.Duration timeout = 3 [(gogoproto.stdduration) = true, (gogoproto.nullable) = false];
+  // PromQL formatted query expression.
+  string expr     = 4;
 }
 
 message QueryResponse {
@@ -44,59 +77,68 @@ message QueryResponse {
 }
 
 message RawQueryRequest {
-  TimeRange range                = 1;
-  repeated LabelMatcher matchers = 2;
+  TimeRange range                = 1 [(gogoproto.nullable) = false];
+  repeated LabelMatcher matchers = 2 [(gogoproto.nullable) = false];
 }
 
-message LabelInfoRequest {
+message LabelRequest {
   string name = 1;
 }
 
-message LabelInfoResponse {
+message LabelResponse {
   repeated string values = 1;
 }
 
 message SeriesRequest {
   TimeRange range                = 1;
-  repeated LabelMatcher matchers = 2;
+  
+  // Fully typed or string based selector of series.
+  oneof selector_or_query {
+    Selector selector = 2;
+    string query      = 3;
+  }
+}
+
+message SeriesInfo {
+  Labels labels = 1 [(gogoproto.nullable) = false];
 }
 
 message SeriesResponse {
-  repeated Labels series = 1;
+  repeated SeriesInfo series = 1;
 }
 
-service RemoteWrite {
-  rpc Write(WriteRequest) returns (WriteResponse);
-}
+// service Remote {
+//   rpc Write(RemoteWriteRequest) returns (RemoteWriteResponse);
+//   rpc Read(RemoteReadRequest) returns (RemoteReadResponse);
+// }
 
-message WriteRequest {
+message RemoteWriteRequest {
   repeated TimeSeries series = 1;
 }
 
-message WriteResponse {
+message RemoteWriteResponse {
 }
 
-service TSDB {
+service Admin {
   // Reload triggers a reload of block data.
-  rpc Reload(TSDBReloadRequest) returns (TSDBReloadResponse) {
+  rpc TSDBReload(TSDBReloadRequest) returns (TSDBReloadResponse) {
     option (google.api.http) = {
-      get: "/v2/admin/tsdb/reload"
+      get: "/admin/v1/tsdb/reload"
     };
   }
 
-  // Snapshot creates a snapshot of all current data into 'snapshots/<datetime>' under
+  // Snapshot creates a snapshot of all current data into 'snapshots/<datetime>-<rand>' under
   // the TSDB's date directory.
-  rpc Snapshot(TSDBSnapshotRequest) returns (TSDBSnapshotResponse) {
+  rpc TSDBSnapshot(TSDBSnapshotRequest) returns (TSDBSnapshotResponse) {
     option (google.api.http) = {
-      get: "/v2/admin/tsdb/snapshot"
+      get: "/admin/v1/tsdb/snapshot"
     };
   }
 
   // DeleteSeries deletes data for a selection of series in a time range.
-  rpc DeleteSeries(TSDBSeriesDeleteRequest) returns (TSDBSeriesDeleteResponse) {
+  rpc DeleteSeries(SeriesDeleteRequest) returns (SeriesDeleteResponse) {
     option (google.api.http) = {
-      post: "/v2/admin/tsdb/delete_series"
-      body: "*"
+      delete: "/admin/v1/series"
     };
   }
 }
@@ -108,14 +150,6 @@ message TSDBReloadRequest {
 message TSDBReloadResponse {
 }
 
-message TSDBSeriesDeleteRequest {
-  TimeRange range                = 1;
-  repeated LabelMatcher matchers = 2;
-}
-
-message TSDBSeriesDeleteResponse {
-}
-
 message TSDBSnapshotRequest {
 }
 
@@ -123,11 +157,49 @@ message TSDBSnapshotResponse {
   string name = 1;
 }
 
+message SeriesDeleteRequest {
+  TimeRange range       = 1;
+
+  oneof selector_or_query {
+    Selector selector = 2;
+    string query      = 3;
+  }
+}
+
+message SeriesDeleteResponse {
+  uint64 NumDeleted = 1;
+}
+
 service Status {
-  rpc Targets(TargetsRequest) returns (TargetsResponse);
-  rpc Alertmanagers(AlertmanagersRequest) returns (AlertmanagersResponse);
-  rpc Health(HealthRequest) returns (HealthResponse);
-  rpc Readiness(ReadinessRequest) returns (ReadinessResponse);
+  rpc Targets(TargetsRequest) returns (TargetsResponse) {
+    option (google.api.http) = {
+      get: "/v2/status/targets"
+    };
+  }
+
+  rpc Alertmanagers(AlertmanagersRequest) returns (AlertmanagersResponse) {
+    option (google.api.http) = {
+      get: "/v2/status/alertmanagers"
+    };
+  }
+
+  rpc Health(HealthRequest) returns (HealthResponse) {
+    option (google.api.http) = {
+      get: "/v2/status/health"
+    };
+  }
+
+  rpc Readiness(ReadinessRequest) returns (ReadinessResponse) {
+    option (google.api.http) = {
+      get: "/v2/status/ready"
+    };
+  }
+
+  rpc Config(ConfigRequest) returns (ConfigResponse) {
+    option (google.api.http) = {
+      get: "/v2/status/config"
+    };
+  }
 }
 
 message TargetsRequest {
@@ -140,16 +212,16 @@ message TargetStatus {
     HEALTHY   = 1;
     UNHEALTHY = 2;
   }
-  Health health = 1;
+  Health health                         = 1;
   google.protobuf.Timestamp last_scrape = 2 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
   string last_error                     = 3;
 }
 
 message Target {
-  string scrape_url                 = 1;
-  repeated Label labels             = 2;
-  repeated Label discovered_labels  = 3;
-  TargetStatus status               = 4;
+  string scrape_url        = 1;
+  Labels labels            = 2 [(gogoproto.nullable) = false];
+  Labels discovered_labels = 3 [(gogoproto.nullable) = false];
+  TargetStatus status      = 4 [(gogoproto.nullable) = false];
 }
 
 message TargetsResponse {
@@ -159,10 +231,13 @@ message TargetsResponse {
 message AlertmanagersRequest {
 }
 
-message AlertmanagersResponse {
+message Alertmanager {
+  string url = 1;
 }
 
-
+message AlertmanagersResponse {
+  repeated Alertmanager alertmanagers = 1;
+}
 
 message HealthRequest {
 }
@@ -174,4 +249,10 @@ message ReadinessRequest {
 }
 
 message ReadinessResponse {
+}
+
+message ConfigRequest {
+}
+
+message ConfigResponse {
 }

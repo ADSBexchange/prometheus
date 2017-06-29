@@ -286,7 +286,24 @@ func (h *Handler) Run(ctx context.Context) error {
 		httpl   = m.Match(cmux.HTTP1Fast())
 		grpcSrv = grpc.NewServer()
 	)
-	av2 := apiv2.New(h.options.Storage)
+	av2 := apiv2.New(
+		time.Now,
+		h.options.Storage,
+		h.options.QueryEngine,
+		func(mint, maxt int64) storage.Querier {
+			q, err := ptsdb.Adapter(h.options.Storage).Querier(mint, maxt)
+			if err != nil {
+				panic(err)
+			}
+			return q
+		},
+		func() []*retrieval.Target {
+			return h.options.TargetManager.Targets()
+		},
+		func() []*url.URL {
+			return h.options.Notifier.Alertmanagers()
+		},
+	)
 	av2.RegisterGRPC(grpcSrv)
 
 	hh, err := av2.HTTPHandler(grpcl.Addr().String())
@@ -299,7 +316,7 @@ func (h *Handler) Run(ctx context.Context) error {
 	})
 	mux := http.NewServeMux()
 	mux.Handle("/", h.router)
-	mux.Handle("/api/v2/", http.StripPrefix("/api/v2",
+	mux.Handle("/api/", http.StripPrefix("/api",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			setCORS(w)
 			hh.ServeHTTP(w, r)

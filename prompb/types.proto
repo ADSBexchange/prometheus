@@ -16,12 +16,13 @@ package prometheus;
 
 option go_package = "prompb";
 
+import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "gogoproto/gogo.proto";
 
 message TimeRange {
-  google.protobuf.Timestamp min_time = 1 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
-  google.protobuf.Timestamp max_time = 2 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  google.protobuf.Timestamp min_time = 1 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp max_time = 2 [(gogoproto.stdtime) = true];
 }
 
 message Sample {
@@ -40,7 +41,7 @@ message Label {
 }
 
 message Labels {
-  repeated Label labels = 1;
+  repeated Label labels = 1 [(gogoproto.nullable) = false];
 }
 
 // Matcher specifies a rule, which can match or set of labels or not.
@@ -54,4 +55,8 @@ message LabelMatcher {
   Type type    = 1;
   string name  = 2;
   string value = 3;
+}
+
+message Selector {
+  repeated LabelMatcher matchers = 1 [(gogoproto.nullable) = false];
 }
