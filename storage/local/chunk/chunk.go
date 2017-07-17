@@ -347,8 +347,8 @@ func addToOverflowChunk(c Chunk, s model.SamplePair) ([]Chunk, error) {
 	return []Chunk{c, overflowChunks[0]}, nil
 }
 
-// transcodeAndAdd is a utility function that transcodes the dst chunk into the
-// provided src chunk (plus the necessary overflow chunks) and then adds the
+// transcodeAndAdd is a utility function that transcodes the src chunk into the
+// provided dst chunk (plus the necessary overflow chunks) and then adds the
 // provided sample. It returns the new chunks (transcoded plus overflow) with
 // the new sample at the end.
 func transcodeAndAdd(dst Chunk, src Chunk, s model.SamplePair) ([]Chunk, error) {
@@ -356,26 +356,26 @@ func transcodeAndAdd(dst Chunk, src Chunk, s model.SamplePair) ([]Chunk, error) 
 
 	var (
 		head            = dst
-		body, NewChunks []Chunk
+		body, newChunks []Chunk
 		err             error
 	)
 
 	it := src.NewIterator()
 	for it.Scan() {
-		if NewChunks, err = head.Add(it.Value()); err != nil {
+		if newChunks, err = head.Add(it.Value()); err != nil {
 			return nil, err
 		}
-		body = append(body, NewChunks[:len(NewChunks)-1]...)
-		head = NewChunks[len(NewChunks)-1]
+		body = append(body, newChunks[:len(newChunks)-1]...)
+		head = newChunks[len(newChunks)-1]
 	}
 	if it.Err() != nil {
 		return nil, it.Err()
 	}
 
-	if NewChunks, err = head.Add(s); err != nil {
+	if newChunks, err = head.Add(s); err != nil {
 		return nil, err
 	}
-	return append(body, NewChunks...), nil
+	return append(body, newChunks...), nil
 }
 
 // New creates a new chunk according to the encoding set by the

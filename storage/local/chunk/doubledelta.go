@@ -83,6 +83,12 @@ func newDoubleDeltaEncodedChunk(tb, vb deltaBytes, isInt bool, length int) *doub
 // Add implements chunk.
 func (c doubleDeltaEncodedChunk) Add(s model.SamplePair) ([]Chunk, error) {
 	// TODO(beorn7): Since we return &c, this method might cause an unnecessary allocation.
+
+	// TODO(beorn7): Debug statement for bug #2953.
+	if c.timeBytes() == 0 {
+		return nil, fmt.Errorf("zero bytes for time delta found while adding sample pair %s, chunk dump: %x", s, c)
+	}
+
 	if c.Len() == 0 {
 		return c.addFirstSample(s), nil
 	}
@@ -257,7 +263,8 @@ func (c *doubleDeltaEncodedChunk) UnmarshalFromBuf(buf []byte) error {
 	return c.setLen()
 }
 
-// setLen sets the length of the underlying slice and performs some sanity checks.
+// setLen sets the length of the underlying slice and performs some sanity
+// checks.
 func (c *doubleDeltaEncodedChunk) setLen() error {
 	l := binary.LittleEndian.Uint16((*c)[doubleDeltaHeaderBufLenOffset:])
 	if int(l) > cap(*c) {
