@@ -84,11 +84,6 @@ func newDoubleDeltaEncodedChunk(tb, vb deltaBytes, isInt bool, length int) *doub
 func (c doubleDeltaEncodedChunk) Add(s model.SamplePair) ([]Chunk, error) {
 	// TODO(beorn7): Since we return &c, this method might cause an unnecessary allocation.
 
-	// TODO(beorn7): Debug statement for bug #2953.
-	if c.timeBytes() == 0 {
-		return nil, fmt.Errorf("zero bytes for time delta found while adding sample pair %s, chunk dump: %x", s, c)
-	}
-
 	if c.Len() == 0 {
 		return c.addFirstSample(s), nil
 	}
@@ -340,7 +335,12 @@ func (c doubleDeltaEncodedChunk) baseValueDelta() model.SampleValue {
 }
 
 func (c doubleDeltaEncodedChunk) timeBytes() deltaBytes {
-	return deltaBytes(c[doubleDeltaHeaderTimeBytesOffset])
+	tb := deltaBytes(c[doubleDeltaHeaderTimeBytesOffset])
+	// TODO(beorn7): Panic here to debug #2953.
+	if tb == 0 {
+		panic(fmt.Errorf("zero bytes for time delta found, chunk dump: %x", c))
+	}
+	return tb
 }
 
 func (c doubleDeltaEncodedChunk) valueBytes() deltaBytes {
