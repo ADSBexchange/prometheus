@@ -14,12 +14,14 @@
 package remote
 
 import (
+	"context"
+
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/storage"
 )
 
-func (s *Storage) Appender() (storage.Appender, error) {
+func (s *Storage) Appender(context.Context) (storage.Appender, error) {
 	return s, nil
 }
 

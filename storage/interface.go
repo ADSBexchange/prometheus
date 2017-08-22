@@ -14,6 +14,7 @@
 package storage
 
 import (
+	"context"
 	"errors"
 
 	"github.com/prometheus/prometheus/pkg/labels"
@@ -34,7 +35,7 @@ type Storage interface {
 	Querier(mint, maxt int64) (Querier, error)
 
 	// Appender returns a new appender against the storage.
-	Appender() (Appender, error)
+	Appender(context.Context) (Appender, error)
 
 	// Close closes the storage and all its underlying resources.
 	Close() error

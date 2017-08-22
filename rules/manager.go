@@ -14,6 +14,7 @@
 package rules
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
@@ -27,7 +28,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/log"
-	"golang.org/x/net/context"
 
 	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/notifier"
@@ -322,7 +322,7 @@ func (g *Group) Eval(ts time.Time) {
 				numDuplicates = 0
 			)
 
-			app, err := g.opts.Appendable.Appender()
+			app, err := g.opts.Appendable.Appender(context.TODO())
 			if err != nil {
 				g.logger.With("err", err).Warn("creating appender failed")
 				return
@@ -417,7 +417,7 @@ type Manager struct {
 
 // Appendable returns an Appender.
 type Appendable interface {
-	Appender() (storage.Appender, error)
+	Appender(context.Context) (storage.Appender, error)
 }
 
 // ManagerOptions bundles options for the Manager.

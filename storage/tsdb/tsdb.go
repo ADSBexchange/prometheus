@@ -14,6 +14,9 @@
 package tsdb
 
 import (
+	"context"
+	"runtime"
+	"sync/atomic"
 	"time"
 	"unsafe"
 
@@ -27,12 +30,36 @@ import (
 )
 
 func Adapter(db *tsdb.DB) storage.Storage {
-	return &adapter{db: db}
+	a := &adapter{db: db, sema: newContextSemaphore(runtime.GOMAXPROCS(0))}
+
+	r := prometheus.DefaultRegisterer
+
+	r.Register(prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Name: "prometheus_storage_semaphore_capacity",
+		Help: "abc",
+	}, func() float64 {
+		return float64(cap(a.sema.ch))
+	}))
+	r.Register(prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Name: "prometheus_storage_semaphore_waiting",
+		Help: "abc",
+	}, func() float64 {
+		return float64(atomic.LoadUint64(&a.sema.waiting))
+	}))
+	r.Register(prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Name: "prometheus_storage_semaphore_available",
+		Help: "abc",
+	}, func() float64 {
+		return float64(len(a.sema.ch))
+	}))
+
+	return a
 }
 
 // adapter implements a storage.Storage around TSDB.
 type adapter struct {
-	db *tsdb.DB
+	db   *tsdb.DB
+	sema *contextSemaphore
 }
 
 // Options of the DB storage.
@@ -79,17 +106,20 @@ func Open(path string, r prometheus.Registerer, opts *Options) (*tsdb.DB, error)
 	return db, nil
 }
 
-func (a adapter) Querier(mint, maxt int64) (storage.Querier, error) {
+func (a *adapter) Querier(mint, maxt int64) (storage.Querier, error) {
 	return querier{q: a.db.Querier(mint, maxt)}, nil
 }
 
 // Appender returns a new appender against the storage.
-func (a adapter) Appender() (storage.Appender, error) {
-	return appender{a: a.db.Appender()}, nil
+func (a *adapter) Appender(ctx context.Context) (storage.Appender, error) {
+	if !a.sema.Acquire(ctx) {
+		return nil, ctx.Err()
+	}
+	return appender{a: a.db.Appender(), close: a.sema.Release}, nil
 }
 
 // Close closes the storage and all its underlying resources.
-func (a adapter) Close() error {
+func (a *adapter) Close() error {
 	return a.db.Close()
 }
 
@@ -126,7 +156,8 @@ func (s series) Labels() labels.Labels            { return toLabels(s.s.Labels()
 func (s series) Iterator() storage.SeriesIterator { return storage.SeriesIterator(s.s.Iterator()) }
 
 type appender struct {
-	a tsdb.Appender
+	a     tsdb.Appender
+	close func()
 }
 
 func (a appender) Add(lset labels.Labels, t int64, v float64) (string, error) {
@@ -161,8 +192,15 @@ func (a appender) AddFast(_ labels.Labels, ref string, t int64, v float64) error
 	return err
 }
 
-func (a appender) Commit() error   { return a.a.Commit() }
-func (a appender) Rollback() error { return a.a.Rollback() }
+func (a appender) Commit() error {
+	defer a.close()
+	return a.a.Commit()
+}
+
+func (a appender) Rollback() error {
+	defer a.close()
+	return a.a.Rollback()
+}
 
 func convertMatcher(m *labels.Matcher) tsdbLabels.Matcher {
 	switch m.Type {
@@ -195,4 +233,31 @@ func toTSDBLabels(l labels.Labels) tsdbLabels.Labels {
 
 func toLabels(l tsdbLabels.Labels) labels.Labels {
 	return *(*labels.Labels)(unsafe.Pointer(&l))
+}
+
+type contextSemaphore struct {
+	ch      chan struct{}
+	waiting uint64
+}
+
+func newContextSemaphore(capacity int) *contextSemaphore {
+	return &contextSemaphore{ch: make(chan struct{}, capacity)}
+}
+
+func (s *contextSemaphore) Acquire(ctx context.Context) (ok bool) {
+	atomic.AddUint64(&s.waiting, 1)
+
+	select {
+	case s.ch <- struct{}{}:
+		ok = true
+	case <-ctx.Done():
+		ok = false
+	}
+
+	atomic.AddUint64(&s.waiting, ^uint64(0))
+	return ok
+}
+
+func (s *contextSemaphore) Release() {
+	<-s.ch
 }

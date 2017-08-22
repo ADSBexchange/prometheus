@@ -14,14 +14,13 @@
 package rules
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"sync"
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
-
-	"golang.org/x/net/context"
 
 	html_template "html/template"
 

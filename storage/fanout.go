@@ -15,6 +15,7 @@ package storage
 
 import (
 	"container/heap"
+	"context"
 	"strings"
 
 	"github.com/prometheus/common/log"
@@ -59,15 +60,15 @@ func (f *fanout) Querier(mint, maxt int64) (Querier, error) {
 	return &queriers, nil
 }
 
-func (f *fanout) Appender() (Appender, error) {
-	primary, err := f.primary.Appender()
+func (f *fanout) Appender(ctx context.Context) (Appender, error) {
+	primary, err := f.primary.Appender(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	secondaries := make([]Appender, 0, len(f.secondaries))
 	for _, storage := range f.secondaries {
-		appender, err := storage.Appender()
+		appender, err := storage.Appender(ctx)
 		if err != nil {
 			return nil, err
 		}

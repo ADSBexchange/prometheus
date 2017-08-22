@@ -446,7 +446,7 @@ func (t *Test) exec(tc testCommand) error {
 		t.clear()
 
 	case *loadCmd:
-		app, err := t.storage.Appender()
+		app, err := t.storage.Appender(context.TODO())
 		if err != nil {
 			return err
 		}
