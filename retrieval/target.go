@@ -199,9 +199,6 @@ type limitAppender struct {
 }
 
 func (app *limitAppender) Add(lset labels.Labels, t int64, v float64) (string, error) {
-	if lset == nil {
-		return "", nil
-	}
 	if !value.IsStaleNaN(v) {
 		app.i++
 		if app.i > app.limit {
@@ -216,9 +213,6 @@ func (app *limitAppender) Add(lset labels.Labels, t int64, v float64) (string, e
 }
 
 func (app *limitAppender) AddFast(lset labels.Labels, ref string, t int64, v float64) error {
-	if ref == "" {
-		return nil
-	}
 	if !value.IsStaleNaN(v) {
 		app.i++
 		if app.i > app.limit {
@@ -238,6 +232,9 @@ type timeLimitAppender struct {
 }
 
 func (app *timeLimitAppender) Add(lset labels.Labels, t int64, v float64) (string, error) {
+	if lset == nil {
+		return "", errSeriesDropped
+	}
 	if t > app.maxTime {
 		return "", storage.ErrOutOfBounds
 	}

@@ -387,7 +387,7 @@ func (sp *scrapePool) mutateSampleLabels(lset labels.Labels, target *Target) lab
 	res := lb.Labels()
 
 	if mrc := sp.config.MetricRelabelConfigs; len(mrc) > 0 {
-		res = relabel.Process(lset, mrc...)
+		res = relabel.Process(res, mrc...)
 	}
 
 	return res
@@ -539,8 +539,9 @@ type scrapeLoop struct {
 type scrapeCache struct {
 	iter uint64 // Current scrape iteration.
 
-	refs  map[string]*refEntry       // Parsed string to ref.
-	lsets map[string]*lsetCacheEntry // Ref to labelset and string.
+	refs    map[string]*refEntry       // Parsed string to ref.
+	lsets   map[string]*lsetCacheEntry // Ref to labelset and string.
+	dropped map[string]uint64
 
 	// seriesCur and seriesPrev store the labels of series that were seen
 	// in the current and previous scrape.
@@ -555,6 +556,7 @@ func newScrapeCache() *scrapeCache {
 		lsets:      map[string]*lsetCacheEntry{},
 		seriesCur:  map[uint64]labels.Labels{},
 		seriesPrev: map[uint64]labels.Labels{},
+		dropped:    map[string]uint64{},
 	}
 }
 
@@ -566,6 +568,11 @@ func (c *scrapeCache) iterDone() {
 		if e.lastIter < c.iter {
 			delete(c.refs, s)
 			delete(c.lsets, e.ref)
+		}
+	}
+	for s, iter := range c.dropped {
+		if iter < c.iter {
+			delete(c.dropped, s)
 		}
 	}
 
@@ -587,6 +594,18 @@ func (c *scrapeCache) getRef(met string) (string, bool) {
 	}
 	e.lastIter = c.iter
 	return e.ref, true
+}
+
+func (c *scrapeCache) addDropped(met string) {
+	c.dropped[met] = c.iter
+}
+
+func (c *scrapeCache) getDropped(met string) bool {
+	_, ok := c.dropped[met]
+	if ok {
+		c.dropped[met] = c.iter
+	}
+	return ok
 }
 
 func (c *scrapeCache) addRef(met, ref string, lset labels.Labels, hash uint64) {
@@ -684,6 +703,7 @@ mainLoop:
 				time.Since(last).Seconds(),
 			)
 		}
+		last = start
 
 		scrapeErr := sl.scraper.scrape(scrapeCtx, buf)
 		var b []byte
@@ -734,7 +754,6 @@ mainLoop:
 			}
 		}
 
-		last = start
 		reportCtx, cancel := context.WithTimeout(sl.ctx, timeout/2)
 
 		reportApp, err := sl.appender(reportCtx)
@@ -867,8 +886,15 @@ loop:
 			t = *tp
 		}
 
+		if sl.cache.getDropped(yoloString(met)) {
+			continue
+		}
 		ref, ok := sl.cache.getRef(yoloString(met))
 		if ok {
+			entry := sl.cache.lsets[ref]
+			if entry == nil {
+				fmt.Println("ref", ref, yoloString(met), "empty entry")
+			}
 			lset := sl.cache.lsets[ref].lset
 			switch err = app.AddFast(lset, ref, t, v); err {
 			case nil:
@@ -883,7 +909,7 @@ loop:
 				continue
 			case storage.ErrOutOfOrderSample:
 				numOutOfOrder++
-				sl.l.With("timeseries", string(met)).Debug("Out of order sample")
+				sl.l.With("timeseries", lset).Debug("Out of order sample1")
 				targetScrapeSampleOutOfOrder.Inc()
 				continue
 			case storage.ErrDuplicateSampleForTimestamp:
@@ -918,22 +944,25 @@ loop:
 				hash = e.hash
 			} else {
 				mets = p.Metric(&lset)
+				// We store the hash of the exposed series as it is used in the per-target cache.
+				// The label set is stored with target labels attached so we pass on the right one
+				// to the storage.
 				hash = lset.Hash()
+				lset = sl.mutator(lset)
 			}
-			lset = sl.mutator(lset)
-
+			if lset == nil {
+				sl.cache.addDropped(mets)
+				continue
+			}
 			var ref string
 			ref, err = app.Add(lset, t, v)
 			// TODO(fabxc): also add a dropped-cache?
 			switch err {
 			case nil:
-			case errSeriesDropped:
-				err = nil
-				continue
 			case storage.ErrOutOfOrderSample:
 				err = nil
 				numOutOfOrder++
-				sl.l.With("timeseries", string(met)).Debug("Out of order sample")
+				sl.l.With("timeseries", lset).Debug("Out of order sample2")
 				targetScrapeSampleOutOfOrder.Inc()
 				continue
 			case storage.ErrDuplicateSampleForTimestamp:
@@ -1072,13 +1101,16 @@ func (sl *scrapeLoop) addReportSample(app storage.Appender, s string, t int64, v
 			return err
 		}
 	}
-	lset := sl.reportMutator(labels.Labels{
+	lset := labels.Labels{
 		labels.Label{Name: labels.MetricName, Value: s},
-	})
+	}
+	hash := lset.Hash()
+	lset = sl.reportMutator(lset)
+
 	ref, err := app.Add(lset, t, v)
 	switch err {
 	case nil:
-		sl.cache.addRef(s2, ref, lset, lset.Hash())
+		sl.cache.addRef(s2, ref, lset, hash)
 		return nil
 	case storage.ErrOutOfOrderSample, storage.ErrDuplicateSampleForTimestamp:
 		return nil

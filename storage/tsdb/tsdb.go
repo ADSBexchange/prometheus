@@ -29,6 +29,19 @@ import (
 	tsdbLabels "github.com/prometheus/tsdb/labels"
 )
 
+var semaWaitTime = prometheus.NewSummary(prometheus.SummaryOpts{
+	Name: "prometheus_storage_semaphore_wait_time_seconds",
+	Help: "abc",
+})
+var semaEnter = prometheus.NewCounter(prometheus.CounterOpts{
+	Name: "prometheus_storage_semaphore_enters_total",
+	Help: "abc",
+})
+var storageAppenderDuration = prometheus.NewSummary(prometheus.SummaryOpts{
+	Name: "prometheus_storage_appender_open_duration_seconds",
+	Help: "abc",
+})
+
 func Adapter(db *tsdb.DB) storage.Storage {
 	a := &adapter{db: db, sema: newContextSemaphore(runtime.GOMAXPROCS(0))}
 
@@ -50,8 +63,10 @@ func Adapter(db *tsdb.DB) storage.Storage {
 		Name: "prometheus_storage_semaphore_available",
 		Help: "abc",
 	}, func() float64 {
-		return float64(len(a.sema.ch))
+		return float64(len(a.sema.ch) - len(a.sema.ch))
 	}))
+	r.Register(semaWaitTime)
+	r.Register(storageAppenderDuration)
 
 	return a
 }
@@ -112,10 +127,14 @@ func (a *adapter) Querier(mint, maxt int64) (storage.Querier, error) {
 
 // Appender returns a new appender against the storage.
 func (a *adapter) Appender(ctx context.Context) (storage.Appender, error) {
-	if !a.sema.Acquire(ctx) {
-		return nil, ctx.Err()
-	}
-	return appender{a: a.db.Appender(), close: a.sema.Release}, nil
+	// if !a.sema.Acquire(ctx) {
+	// 	return nil, ctx.Err()
+	// }
+	// start := time.Now()
+	return appender{a: a.db.Appender(), close: func() {
+		// storageAppenderDuration.Observe(time.Since(start).Seconds())
+		// a.sema.Release()
+	}}, nil
 }
 
 // Close closes the storage and all its underlying resources.
@@ -247,12 +266,17 @@ func newContextSemaphore(capacity int) *contextSemaphore {
 func (s *contextSemaphore) Acquire(ctx context.Context) (ok bool) {
 	atomic.AddUint64(&s.waiting, 1)
 
+	start := time.Now()
+
 	select {
 	case s.ch <- struct{}{}:
 		ok = true
+		semaEnter.Inc()
 	case <-ctx.Done():
 		ok = false
 	}
+
+	semaWaitTime.Observe(time.Since(start).Seconds())
 
 	atomic.AddUint64(&s.waiting, ^uint64(0))
 	return ok
