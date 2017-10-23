@@ -273,13 +273,23 @@ func (h *Head) ReadWAL() error {
 		}
 	}
 	samplesFunc := func(samples []RefSample) {
-		var buf []RefSample
-		select {
-		case buf = <-input:
-		default:
-			buf = make([]RefSample, 0, len(samples)*11/10)
+		// We split up the samples into chunks of 5000 samples or less.
+		// With O(300 * #cores) in-flight sample batches, large scrapes could otherwise
+		// cause thousands of very large in flight buffers occupying large amounts
+		// of unused memory.
+		for len(samples) > 0 {
+			n := 5000
+			if len(samples) < n {
+				n = len(samples)
+			}
+			var buf []RefSample
+			select {
+			case buf = <-input:
+			default:
+			}
+			firstInput <- append(buf[:0], samples[:n]...)
+			samples = samples[n:]
 		}
-		firstInput <- append(buf[:0], samples...)
 	}
 	deletesFunc := func(stones []Stone) {
 		for _, s := range stones {
@@ -665,7 +675,7 @@ func (h *Head) gc() {
 	// Rebuild symbols and label value indices from what is left in the postings terms.
 	h.postings.mtx.RLock()
 
-	symbols := make(map[string]struct{}, len(h.symbols))
+	symbols := make(map[string]struct{})
 	values := make(map[string]stringset, len(h.values))
 
 	for t := range h.postings.m {
@@ -1270,6 +1280,12 @@ func computeChunkEndTime(start, cur, max int64) int64 {
 
 func (s *memSeries) iterator(id int) chunks.Iterator {
 	c := s.chunk(id)
+	// TODO(fabxc): Work around! A querier may have retrieved a pointer to a series' chunk,
+	// which got then garbage collected before it got accessed.
+	// We must ensure to not garbage collect as long as any readers still hold a reference.
+	if c == nil {
+		return chunks.NewNopIterator()
+	}
 
 	if id-s.firstChunkID < len(s.chunks)-1 {
 		return c.chunk.Iterator()
