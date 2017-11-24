@@ -83,7 +83,9 @@ type Alert struct {
 	Value float64
 	// The interval during which the condition of this alert held true.
 	// ResolvedAt will be 0 to indicate a still active alert.
-	ActiveAt, ResolvedAt time.Time
+	ActiveAt   time.Time
+	FiringAt   time.Time
+	ResolvedAt time.Time
 }
 
 // An AlertingRule generates alerts from its vector expression.
@@ -264,12 +266,14 @@ func (r *AlertingRule) Eval(ctx context.Context, ts time.Time, query QueryFunc, 
 			if a.State != StateInactive {
 				a.State = StateInactive
 				a.ResolvedAt = ts
+				a.FiringAt = time.Time{}
 			}
 			continue
 		}
 
 		if a.State == StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration {
 			a.State = StateFiring
+			a.FiringAt = ts
 		}
 
 		vec = append(vec, r.sample(a, ts))
