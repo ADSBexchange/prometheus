@@ -602,6 +602,12 @@
 			"revisionTime": "2016-08-03T19:07:31Z"
 		},
 		{
+			"checksumSHA1": "QubMAmHAhgZcnsB1HqsoUP8W4vw=",
+			"path": "github.com/json-iterator/go",
+			"revision": "051434fab7e041ee2834e049ceae37492fc0412c",
+			"revisionTime": "2017-11-30T02:42:24Z"
+		},
+		{
 			"checksumSHA1": "gA95N2LM2hEJLoqrTPaFsSWDJ2Y=",
 			"origin": "k8s.io/client-go/1.5/vendor/github.com/juju/ratelimit",
 			"path": "github.com/juju/ratelimit",
